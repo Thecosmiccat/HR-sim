@@ -215,8 +215,12 @@ def marketing_spend():
         message.set("Not enough money for marketing!")
 
 def change_leader():
-    game.leader_style = leadership_var.get()
+    styles = ["autocratic", "democratic", "laissez-faire"]
+    current = styles.index(game.leader_style)
+    game.leader_style = styles[(current + 1) % 3]
     message.set(f"Leadership changed to {game.leader_style.capitalize()}!")
+    update_status()
+
 
 # ---------------- GAME WINDOW ----------------
 game_window = tk.Tk()
