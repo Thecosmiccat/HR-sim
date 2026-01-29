@@ -274,7 +274,7 @@ for b in buttons:
 for b in buttons:
     b.configure(
         bg="#334155",
-        fg="#1E3A8A",         # <-- navy text
+        fg="#D3DDF9",         # <-- navy text
         activebackground="#1E293B",
         activeforeground="#22C55E",
         relief="flat",
