@@ -96,6 +96,9 @@ def money_tick():
         game.employees -= 1
         message.set(message.get() + " Low morale! An employee quit.")
 
+    if game.productivity > 80:
+        game.morale -= 2
+
     random_event()
     update_status()
     check_game_end()
