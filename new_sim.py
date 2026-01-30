@@ -244,6 +244,8 @@ def restart_game():
     for b in buttons:
         b.config(state="normal")
     restart_btn.pack_forget()
+    update_upgrade_buttons()
+    update_dept_buttons()
     game_window.withdraw()
     create_start_screen()
 
@@ -367,17 +369,21 @@ def buy_department(dept):
 
 def update_upgrade_buttons():
     for up, btn in upgrade_buttons.items():
+        cost = {"Better Office": 10000, "Automation": 15000, "Coffee Machine": 5000}[up]
+        effect = upgrade_effects[up]
         if game.upgrades[up]:
             btn.config(state="disabled", text=f"{up} (Owned)")
         else:
-            btn.config(state="normal")
+            btn.config(state="normal", text=f"{up} (${cost}) - {effect}")
 
 def update_dept_buttons():
     for dept, btn in dept_buttons.items():
+        cost = {"HR": 8000, "IT": 10000, "PR": 7000}[dept]
+        effect = dept_effects[dept]
         if game.departments[dept]:
             btn.config(state="disabled", text=f"{dept} (Hired)")
         else:
-            btn.config(state="normal")
+            btn.config(state="normal", text=f"{dept} (${cost}) - {effect}")
 
 # ---------------- GAME WINDOW ----------------
 game_window = tk.Tk()
