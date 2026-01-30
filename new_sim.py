@@ -11,6 +11,7 @@ from tkinter import ttk
 class Game:
     def __init__(self):
         self.year = 1
+        self.month = 1
         self.employees = 10
         self.morale = 50
         self.productivity = 50
@@ -36,7 +37,14 @@ class Game:
             "PR": False
         }
         self.news_feed = ["Welcome to HR Management Simulator! News will appear here."]
-        self.achievements = []
+        self.achievements = {
+            "Global GDP": {"target": 117_000_000_000_000, "unlocked": False, "desc": "Reach $117 trillion (Global GDP)"},
+            "USA Debt": {"target": 34_000_000_000_000, "unlocked": False, "desc": "Reach $34 trillion (USA National Debt)"},
+            "Billionaire": {"target": 1_000_000_000, "unlocked": False, "desc": "Reach $1 billion"},
+            "Market Dominator": {"target": 100, "unlocked": False, "desc": "Reach 100% market share"},
+            "Employee Empire": {"target": 1000, "unlocked": False, "desc": "Hire 1000 employees"}
+        }
+        self.continue_mode = False
 
 game = Game()
 
@@ -44,7 +52,7 @@ game = Game()
 def update_status():
     target = win_target()
     company_label.config(text=f"Company: {game.company}")
-    year_label.config(text=f"Year: {game.year}")
+    year_label.config(text=f"Year: {game.year}, Month: {game.month}")
     money_label.config(text=f"Money: ${game.money:,}")
     market_share_label.config(text=f"Market Share: {game.market_share}% / {target}%")
     employees_label.config(text=f"Employees: {game.employees}")
@@ -70,6 +78,9 @@ def update_status():
     leadership_label.config(text=f"Leadership: {game.leader_style.capitalize()}")
     difficulty_label.config(text=f"Difficulty: {game.difficulty}")
     
+    unlocked = [ach for ach, data in game.achievements.items() if data["unlocked"]]
+    achievements_label.config(text=f"Achievements: {len(unlocked)}/{len(game.achievements)} unlocked")
+
     profit_label.config(text=f"Monthly Profit: ${calculate_profit():,}")
 
 def leadership_effect():
@@ -164,8 +175,24 @@ def random_event():
         add_news(desc)
         return None
 
+def check_achievements():
+    for ach, data in game.achievements.items():
+        if not data["unlocked"]:
+            if ach in ["Global GDP", "USA Debt", "Billionaire"]:
+                if game.money >= data["target"]:
+                    data["unlocked"] = True
+                    add_news(f"Achievement Unlocked: {ach} - {data['desc']}")
+            elif ach == "Market Dominator":
+                if game.market_share >= data["target"]:
+                    data["unlocked"] = True
+                    add_news(f"Achievement Unlocked: {ach} - {data['desc']}")
+            elif ach == "Employee Empire":
+                if game.employees >= data["target"]:
+                    data["unlocked"] = True
+                    add_news(f"Achievement Unlocked: {ach} - {data['desc']}")
+
 def add_news(msg):
-    game.news_feed.append(f"Year {game.year}: {msg}")
+    game.news_feed.append(f"Year {game.year}, Month {game.month}: {msg}")
     if len(game.news_feed) > 10:
         game.news_feed.pop(0)
     news_box.config(state="normal")
@@ -181,6 +208,12 @@ def monthly_tick():
 
     profit = calculate_profit()
     game.money += profit
+
+    # Increment time
+    game.month += 1
+    if game.month > 12:
+        game.month = 1
+        game.year += 1
 
     # Stat decays
     game.morale = max(0, game.morale - 5)
@@ -198,6 +231,7 @@ def monthly_tick():
     game.market_share = max(0, game.market_share - 0.5 + min(2, game.money // 100000))  # slight decay, but money helps
 
     random_event()
+    check_achievements()
     update_status()
     check_game_end()
 
@@ -214,9 +248,15 @@ def next_year():
 
 def check_game_end():
     target = win_target()
-    if game.market_share >= target:
-        message.set(f"YOU WIN! {target}% market share achieved!")
-        end_game()
+    if game.market_share >= target and not game.continue_mode:
+        result = messagebox.askyesno("Victory!", f"YOU WIN! {target}% market share achieved!\n\nContinue for achievements?")
+        if result:
+            game.continue_mode = True
+            message.set("Continuing for achievements... No win condition now!")
+            add_news("Continuing in achievement mode!")
+        else:
+            message.set(f"YOU WIN! {target}% market share achieved!")
+            end_game()
     elif game.money <= 0:
         message.set("Bankrupt! Game Over.")
         end_game()
@@ -397,7 +437,7 @@ message = tk.StringVar()
 
 # Status frame with bars
 status_frame = tk.Frame(game_window, bg="#1E293B")
-status_frame.pack(pady=5, fill="x")
+# status_frame.pack(pady=5, fill="x")  # moved later
 
 # Style for progress bars
 style = ttk.Style()
@@ -427,8 +467,8 @@ def create_stat_frame(parent, text_var):
     frame = tk.Frame(parent, bg="#1E293B")
     label = tk.Label(frame, textvariable=text_var, font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
     label.pack(side="left")
-    bar = ttk.Progressbar(frame, orient="horizontal", length=200, mode="determinate", maximum=100)
-    bar.pack(side="right", padx=(10,0))
+    bar = ttk.Progressbar(frame, orient="horizontal", length=150, mode="determinate", maximum=100)
+    bar.pack(side="left", padx=(5,0))
     frame.pack(fill="x")
     return label, bar
 
@@ -455,6 +495,9 @@ leadership_label.pack(fill="x")
 
 difficulty_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
 difficulty_label.pack(fill="x")
+
+achievements_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+achievements_label.pack(fill="x")
 
 profit_label = tk.Label(
     game_window,
@@ -523,6 +566,8 @@ buttons = [
 for b in buttons:
     b.pack(fill="x", pady=2)
     b.configure(bg="#334155", fg="#D3DDF9", activebackground="#1E293B", activeforeground="#22C55E", relief="flat", bd=0)
+
+status_frame.pack(pady=5, fill="x")  # now after buttons
 
 # Upgrade buttons
 upgrade_frame = tk.Frame(game_window, bg="#0F172A")
