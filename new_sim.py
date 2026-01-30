@@ -1,10 +1,11 @@
-# Business Empire Builder by Jeffrey
-# A fun management simulator with strategy and choices
+# HR Management Simulator by Jeffrey
+# Inspired by ideas from Danila, Audrey, and Lyra
 
 import tkinter as tk
 import tkinter.messagebox as messagebox
 import random
 import time
+from tkinter import ttk
 
 # ---------------- GAME STATE ----------------
 class Game:
@@ -34,7 +35,7 @@ class Game:
             "IT": False,
             "PR": False
         }
-        self.news_feed = []
+        self.news_feed = ["Welcome to HR Management Simulator! News will appear here."]
         self.achievements = []
 
 game = Game()
@@ -42,14 +43,33 @@ game = Game()
 # ---------------- GAME FUNCTIONS ----------------
 def update_status():
     target = win_target()
-    status.set(
-        f"Company: {game.company}\nYear: {game.year}\nMoney: ${game.money:,}\n"
-        f"Market Share: {game.market_share}% / {target}%\n"
-        f"Employees: {game.employees}\nMorale: {game.morale}\nProductivity: {game.productivity}\n"
-        f"Marketing: {game.marketing}\nInnovation: {game.innovation}\nReputation: {game.reputation}\n"
-        f"Customer Satisfaction: {game.customer_satisfaction}\nLeadership: {game.leader_style.capitalize()}\n"
-        f"Difficulty: {game.difficulty}"
-    )
+    company_label.config(text=f"Company: {game.company}")
+    year_label.config(text=f"Year: {game.year}")
+    money_label.config(text=f"Money: ${game.money:,}")
+    market_share_label.config(text=f"Market Share: {game.market_share}% / {target}%")
+    employees_label.config(text=f"Employees: {game.employees}")
+    
+    # Update bars
+    def update_bar(var, label, bar, value):
+        var.set(f"{label}: {value}")
+        bar['value'] = value
+        if value > 66:
+            bar['style'] = 'green.Horizontal.TProgressbar'
+        elif value > 33:
+            bar['style'] = 'yellow.Horizontal.TProgressbar'
+        else:
+            bar['style'] = 'red.Horizontal.TProgressbar'
+    
+    update_bar(morale_var, "Morale", morale_bar, game.morale)
+    update_bar(productivity_var, "Productivity", productivity_bar, game.productivity)
+    update_bar(marketing_var, "Marketing", marketing_bar, game.marketing)
+    update_bar(innovation_var, "Innovation", innovation_bar, game.innovation)
+    update_bar(reputation_var, "Reputation", reputation_bar, game.reputation)
+    update_bar(customer_satisfaction_var, "Customer Satisfaction", customer_satisfaction_bar, game.customer_satisfaction)
+    
+    leadership_label.config(text=f"Leadership: {game.leader_style.capitalize()}")
+    difficulty_label.config(text=f"Difficulty: {game.difficulty}")
+    
     profit_label.config(text=f"Monthly Profit: ${calculate_profit():,}")
 
 def leadership_effect():
@@ -148,7 +168,10 @@ def add_news(msg):
     game.news_feed.append(f"Year {game.year}: {msg}")
     if len(game.news_feed) > 10:
         game.news_feed.pop(0)
-    news_text.set("\n".join(reversed(game.news_feed)))
+    news_box.config(state="normal")
+    news_box.delete(1.0, tk.END)
+    news_box.insert(tk.END, "\n".join(reversed(game.news_feed)))
+    news_box.config(state="disabled")
 
 def monthly_tick():
     if not game.running:
@@ -213,8 +236,11 @@ def restart_game():
     global start_window
     game.__init__()
     message.set("")
-    status.set("")
-    news_text.set("")
+    # status.set("")  # removed
+    news_box.config(state="normal")
+    news_box.delete(1.0, tk.END)
+    news_box.insert(tk.END, "Welcome to HR Management Simulator! News will appear here.")
+    news_box.config(state="disabled")
     for b in buttons:
         b.config(state="normal")
     restart_btn.pack_forget()
@@ -356,35 +382,73 @@ def update_dept_buttons():
 # ---------------- GAME WINDOW ----------------
 game_window = tk.Tk()
 game_window.configure(bg="#0F172A")
-game_window.title("Business Empire Builder")
+game_window.title("HR Management Simulator")
 game_window.geometry("800x900")
 game_window.withdraw()
 
 status = tk.StringVar()
 message = tk.StringVar()
-news_text = tk.StringVar()
 
-tk.Label(
-    game_window,
-    textvariable=status,
-    font=("Arial", 12),
-    justify="left",
-    bg="#1E293B",
-    fg="#F1F5F9"
-).pack(pady=10, fill="x")
+# Status frame with bars
+status_frame = tk.Frame(game_window, bg="#1E293B")
+status_frame.pack(pady=5, fill="x")
 
-message_label = tk.Label(
-    game_window,
-    textvariable=message,
-    font=("Comic Sans MS", 14),
-    fg="#F1F5F9",
-    bg="#334155",
-    width=80,
-    height=2,
-    relief="solid",
-    bd=2
-)
-message_label.pack(pady=8)
+# Style for progress bars
+style = ttk.Style()
+style.theme_use('default')
+style.configure("green.Horizontal.TProgressbar", background='green')
+style.configure("yellow.Horizontal.TProgressbar", background='yellow')
+style.configure("red.Horizontal.TProgressbar", background='red')
+
+# Status labels and bars
+company_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+company_label.pack(fill="x")
+
+year_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+year_label.pack(fill="x")
+
+money_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+money_label.pack(fill="x")
+
+market_share_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+market_share_label.pack(fill="x")
+
+employees_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+employees_label.pack(fill="x")
+
+# Function to create stat frame with label and bar
+def create_stat_frame(parent, text_var):
+    frame = tk.Frame(parent, bg="#1E293B")
+    label = tk.Label(frame, textvariable=text_var, font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+    label.pack(side="left")
+    bar = ttk.Progressbar(frame, orient="horizontal", length=200, mode="determinate", maximum=100)
+    bar.pack(side="right", padx=(10,0))
+    frame.pack(fill="x")
+    return label, bar
+
+morale_var = tk.StringVar()
+morale_label, morale_bar = create_stat_frame(status_frame, morale_var)
+
+productivity_var = tk.StringVar()
+productivity_label, productivity_bar = create_stat_frame(status_frame, productivity_var)
+
+marketing_var = tk.StringVar()
+marketing_label, marketing_bar = create_stat_frame(status_frame, marketing_var)
+
+innovation_var = tk.StringVar()
+innovation_label, innovation_bar = create_stat_frame(status_frame, innovation_var)
+
+reputation_var = tk.StringVar()
+reputation_label, reputation_bar = create_stat_frame(status_frame, reputation_var)
+
+customer_satisfaction_var = tk.StringVar()
+customer_satisfaction_label, customer_satisfaction_bar = create_stat_frame(status_frame, customer_satisfaction_var)
+
+leadership_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+leadership_label.pack(fill="x")
+
+difficulty_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+difficulty_label.pack(fill="x")
 
 profit_label = tk.Label(
     game_window,
@@ -393,7 +457,20 @@ profit_label = tk.Label(
     bg="#0F172A",
     fg="#22C55E"
 )
-profit_label.pack(pady=5)
+profit_label.pack(pady=2)
+
+message_label = tk.Label(
+    game_window,
+    textvariable=message,
+    font=("Comic Sans MS", 14),
+    fg="#F1F5F9",
+    bg="#334155",
+    width=80,
+    height=1,
+    relief="solid",
+    bd=2
+)
+message_label.pack(pady=2)
 
 news_label = tk.Label(
     game_window,
@@ -404,30 +481,37 @@ news_label = tk.Label(
 )
 news_label.pack(pady=5)
 
-news_box = tk.Label(
-    game_window,
-    textvariable=news_text,
+# News feed with scrollbar
+news_frame = tk.Frame(game_window, bg="#0F172A")
+news_frame.pack(pady=5)
+news_scrollbar = tk.Scrollbar(news_frame)
+news_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+news_box = tk.Text(
+    news_frame,
     font=("Arial", 10),
-    justify="left",
     bg="#1E293B",
     fg="#F1F5F9",
     width=80,
-    height=10,
+    height=5,
     relief="solid",
-    bd=2
+    bd=2,
+    yscrollcommand=news_scrollbar.set
 )
-news_box.pack(pady=5)
+news_box.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+news_scrollbar.config(command=news_box.yview)
+news_box.insert(tk.END, "Welcome to HR Management Simulator! News will appear here.")
+news_box.config(state="disabled")  # Make it read-only
 
 # Buttons
 buttons = [
-    tk.Button(game_window, text="Training ($5000)", command=training),
-    tk.Button(game_window, text="Bonuses ($4000)", command=bonus),
-    tk.Button(game_window, text="Recruit ($3000)", command=recruit),
-    tk.Button(game_window, text="Marketing ($4000)", command=marketing_campaign),
-    tk.Button(game_window, text="R&D ($6000)", command=r_and_d),
-    tk.Button(game_window, text="Customer Service ($2000)", command=customer_service),
-    tk.Button(game_window, text="Change Leadership", command=change_leadership),
-    tk.Button(game_window, text="Special Ability", command=special_ability)
+    tk.Button(game_window, text="Training ($5000) - Productivity +15", command=training),
+    tk.Button(game_window, text="Bonuses ($4000) - Morale +20", command=bonus),
+    tk.Button(game_window, text="Recruit ($3000) - +1 Employee", command=recruit),
+    tk.Button(game_window, text="Marketing ($4000) - Marketing +15, Reputation +5", command=marketing_campaign),
+    tk.Button(game_window, text="R&D ($6000) - Innovation +20", command=r_and_d),
+    tk.Button(game_window, text="Customer Service ($2000) - Satisfaction +15, Reputation +3", command=customer_service),
+    tk.Button(game_window, text="Change Leadership (Cycle Styles)", command=change_leadership),
+    tk.Button(game_window, text="Special Ability (Style-Dependent)", command=special_ability)
 ]
 
 for b in buttons:
@@ -439,8 +523,14 @@ upgrade_frame = tk.Frame(game_window, bg="#0F172A")
 upgrade_frame.pack(pady=10)
 tk.Label(upgrade_frame, text="Upgrades:", font=("Arial", 14, "bold"), bg="#0F172A", fg="#22C55E").pack()
 upgrade_buttons = {}
+upgrade_effects = {
+    "Better Office": "Morale +10",
+    "Automation": "Productivity +15",
+    "Coffee Machine": "Slower Morale Decay"
+}
 for up in ["Better Office", "Automation", "Coffee Machine"]:
-    btn = tk.Button(upgrade_frame, text=f"{up} (${['Better Office: 10000', 'Automation: 15000', 'Coffee Machine: 5000'][['Better Office', 'Automation', 'Coffee Machine'].index(up)]})", command=lambda u=up: buy_upgrade(u))
+    cost = {"Better Office": 10000, "Automation": 15000, "Coffee Machine": 5000}[up]
+    btn = tk.Button(upgrade_frame, text=f"{up} (${cost}) - {upgrade_effects[up]}", command=lambda u=up: buy_upgrade(u))
     btn.pack(fill="x", pady=1)
     btn.configure(bg="#475569", fg="#D3DDF9", activebackground="#1E293B", activeforeground="#22C55E", relief="flat", bd=0)
     upgrade_buttons[up] = btn
@@ -450,8 +540,14 @@ dept_frame = tk.Frame(game_window, bg="#0F172A")
 dept_frame.pack(pady=10)
 tk.Label(dept_frame, text="Departments:", font=("Arial", 14, "bold"), bg="#0F172A", fg="#22C55E").pack()
 dept_buttons = {}
+dept_effects = {
+    "HR": "Ongoing Morale Boost",
+    "IT": "Ongoing Productivity Boost",
+    "PR": "Ongoing Reputation Boost"
+}
 for dept in ["HR", "IT", "PR"]:
-    btn = tk.Button(dept_frame, text=f"{dept} (${['HR: 8000', 'IT: 10000', 'PR: 7000'][['HR', 'IT', 'PR'].index(dept)]})", command=lambda d=dept: buy_department(d))
+    cost = {"HR": 8000, "IT": 10000, "PR": 7000}[dept]
+    btn = tk.Button(dept_frame, text=f"{dept} (${cost}) - {dept_effects[dept]}", command=lambda d=dept: buy_department(d))
     btn.pack(fill="x", pady=1)
     btn.configure(bg="#475569", fg="#D3DDF9", activebackground="#1E293B", activeforeground="#22C55E", relief="flat", bd=0)
     dept_buttons[dept] = btn
@@ -474,7 +570,7 @@ def create_start_screen():
     start_window.title("Start Your Empire")
     start_window.geometry("600x700")
 
-    tk.Label(start_window, text="Business Empire Builder", font=("Arial", 24, "bold"), bg="#0F172A", fg="#1E3A8A").pack(pady=20)
+    tk.Label(start_window, text="HR Management Simulator", font=("Arial", 24, "bold"), bg="#0F172A", fg="#1E3A8A").pack(pady=20)
 
     company_var = tk.StringVar(value="")
     leadership_var = tk.StringVar(value="democratic")
@@ -545,7 +641,7 @@ def create_start_screen():
             game.reputation += 5
 
         rules = (
-            "Welcome to Business Empire Builder!\n\n"
+            "Welcome to HR Management Simulator!\n\n"
             "Made by Jeffrey, Ideas from Danila, Audrey and Lyra.\n\n"
             "Rules:\n"
             "- Manage your employees, morale, productivity, marketing, innovation, reputation, and customer satisfaction.\n"
