@@ -1,6 +1,8 @@
 # HR Management Simulator by Jeffrey
 # Inspired by ideas from Danila, Audrey, and Lyra
 
+print("Starting HR Management Simulator... Please wait for the window to appear.")
+
 import tkinter as tk
 import tkinter.messagebox as messagebox
 import random
@@ -303,6 +305,17 @@ def training():
     else:
         message.set("Not enough money!")
 
+def pr_campaign():
+    cost = 5000
+    if game.money >= cost:
+        game.money -= cost
+        game.reputation = min(100, game.reputation + 15)
+        add_news("PR campaign successful! Reputation +15")
+        update_status()
+    else:
+        message.set("Not enough money!")
+
+
 def bonus():
     cost = 4000
     if game.money >= cost:
@@ -554,6 +567,7 @@ news_box.config(state="disabled")  # Make it read-only
 # Buttons
 buttons = [
     tk.Button(game_window, text="Training ($5000) - Productivity +15", command=training),
+    tk.Button(game_window, text="PR Campaign ($5000) - Reputation +15", command=pr_campaign),
     tk.Button(game_window, text="Bonuses ($4000) - Morale +20", command=bonus),
     tk.Button(game_window, text="Recruit ($3000) - +1 Employee", command=recruit),
     tk.Button(game_window, text="Marketing ($4000) - Marketing +15, Reputation +5", command=marketing_campaign),
