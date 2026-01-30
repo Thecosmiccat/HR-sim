@@ -195,7 +195,7 @@ def monthly_tick():
     # Competitor growth
     comp_growth = random.randint(1, 3)
     game.competitor_market_share += comp_growth
-    game.market_share = max(0, game.market_share - 0.5)  # slight decay
+    game.market_share = max(0, game.market_share - 0.5 + min(2, game.money // 100000))  # slight decay, but money helps
 
     random_event()
     update_status()
