@@ -85,7 +85,7 @@ def money_tick():
 
     leadership_effect()
 
-    profit = money_per_second()
+    profit = money_per_second() * 3  # since tick is every 3 seconds
     game.money += profit
 
     # Slow morale decay
@@ -103,7 +103,7 @@ def money_tick():
     update_status()
     check_game_end()
 
-    game_window.after(1000, money_tick)
+    game_window.after(2000, money_tick)
 
 def next_quarter():
     leadership_effect()
@@ -303,13 +303,19 @@ restart_btn = tk.Button(
 def create_start_screen():
     global start_window, company_var, leadership_var, difficulty_var
     start_window = tk.Tk()
+
+    main_frame = tk.Frame(start_window, bg="#0F172A")
+    main_frame.pack(fill="both", expand=True)
+
     start_window.configure(bg="#0F172A")
     start_window.title("Start Game :)")
-    start_window.geometry("750x750")
+    start_window.geometry("500x900")
+    start_window.resizable(True, True)
+
 
     # --- Pulsing Title ---
     title_label = tk.Label(
-        start_window,
+        main_frame,
         text="HR MANAGEMENT SIMULATOR",
         font=("Arial", 28, "bold"),
         fg="#1E3A8A",  # navy
@@ -325,7 +331,7 @@ def create_start_screen():
             pulse_state["direction"] = 1
         pulse_state["size"] += pulse_state["direction"]
         title_label.config(font=("Arial", pulse_state["size"], "bold"))
-        start_window.after(80, pulse_title)
+        main_frame.after(80, pulse_title)
     pulse_title()
     # --- End Pulsing Title ---
 
@@ -335,41 +341,40 @@ def create_start_screen():
     difficulty_var = tk.StringVar(value="Normal")
 
     # --- Labels ---
-    company_label = tk.Label(start_window, text="Selected Company: None", font=("Arial", 14), bg="#1E293B", fg="#1E3A8A")
+    company_label = tk.Label(main_frame, text="Selected Company: None", font=("Arial", 14), bg="#1E293B", fg="#1E3A8A")
     company_label.pack(pady=5)
-    leader_label = tk.Label(start_window, text="Selected Leadership: Democratic", font=("Arial", 14), bg="#1E293B", fg="#1E3A8A")
+    leader_label = tk.Label(main_frame, text="Selected Leadership: Democratic", font=("Arial", 14), bg="#1E293B", fg="#1E3A8A")
     leader_label.pack(pady=5)
-    diff_label = tk.Label(start_window, text="Selected Difficulty: Normal", font=("Arial", 14), bg="#1E293B", fg="#1E3A8A")
+    diff_label = tk.Label(main_frame, text="Selected Difficulty: Normal", font=("Arial", 14), bg="#1E293B", fg="#1E3A8A")
     diff_label.pack(pady=5)
 
     # --- Buttons & Options ---
     # Company
-    tk.Label(start_window, text="Choose Your Company", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=10)
+    tk.Label(main_frame, text="Choose Your Company", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=10)
     def set_company(c):
         company_var.set(c)
         company_label.config(text=f"Selected Company: {c}", fg="green")
-    tk.Button(start_window, text="Factory", font=("Arial",16), command=lambda: set_company("Factory")).pack(pady=5)
-    tk.Button(start_window, text="Hospital", font=("Arial",16), command=lambda: set_company("Hospital")).pack(pady=5)
-    tk.Button(start_window, text="Game Studio", font=("Arial",16), command=lambda: set_company("Game Studio")).pack(pady=5)
+    tk.Button(main_frame, text="Factory", font=("Arial",16), command=lambda: set_company("Factory")).pack(pady=5)
+    tk.Button(main_frame, text="Hospital", font=("Arial",16), command=lambda: set_company("Hospital")).pack(pady=5)
+    tk.Button(main_frame, text="Game Studio", font=("Arial",16), command=lambda: set_company("Game Studio")).pack(pady=5)
 
     # Leadership
-    tk.Label(start_window, text="Choose Leadership Style", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=15)
+    tk.Label(main_frame, text="Choose Leadership Style", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=15)
     def set_leadership(l):
         leadership_var.set(l)
         leader_label.config(text=f"Selected Leadership: {l.capitalize()}", fg="green")
-    tk.Button(start_window, text="Autocratic", font=("Arial",16), command=lambda: set_leadership("autocratic")).pack(pady=3)
-    tk.Button(start_window, text="Democratic", font=("Arial",16), command=lambda: set_leadership("democratic")).pack(pady=3)
-    tk.Button(start_window, text="Laissez-faire", font=("Arial",16), command=lambda: set_leadership("laissez-faire")).pack(pady=3)
+    tk.Button(main_frame, text="Autocratic", font=("Arial",16), command=lambda: set_leadership("autocratic")).pack(pady=3)
+    tk.Button(main_frame, text="Democratic", font=("Arial",16), command=lambda: set_leadership("democratic")).pack(pady=3)
+    tk.Button(main_frame, text="Laissez-faire", font=("Arial",16), command=lambda: set_leadership("laissez-faire")).pack(pady=3)
 
     # Difficulty
-    tk.Label(start_window, text="Choose Difficulty", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=15)
+    tk.Label(main_frame, text="Choose Difficulty", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=15)
     def set_difficulty(d):
         difficulty_var.set(d)
         diff_label.config(text=f"Selected Difficulty: {d}", fg="green")
-    tk.Button(start_window, text="Easy", font=("Arial",16), command=lambda: set_difficulty("Easy")).pack(pady=3)
-    tk.Button(start_window, text="Normal", font=("Arial",16), command=lambda: set_difficulty("Normal")).pack(pady=3)
-    tk.Button(start_window, text="Hard :)", font=("Arial",16), command=lambda: set_difficulty("Hard")).pack(pady=3)
-
+    tk.Button(main_frame, text="Easy", font=("Arial",16), command=lambda: set_difficulty("Easy")).pack(pady=3)
+    tk.Button(main_frame, text="Normal", font=("Arial",16), command=lambda: set_difficulty("Normal")).pack(pady=3)
+    tk.Button(main_frame, text="Hard :)", font=("Arial",16), command=lambda: set_difficulty("Hard")).pack(pady=3)
     # --- Start Game Function ---
     def start_game():
         if company_var.get() == "":
