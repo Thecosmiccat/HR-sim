@@ -419,7 +419,7 @@ def create_start_screen():
         # --- Show rules popup ---
         rules_text = (
             "Welcome to HR Management Simulator!\n\n"
-            "Made by Jeffrey, Ideas from Danila.\n\n"
+            "Made by Jeffrey, Ideas from Danila, Audrey and Lyra.\n\n"
             "Rules:\n"
             "- Manage your employees, morale, productivity, and marketing.\n"
             "- Make money to reach your win target based on difficulty.\n"
@@ -432,18 +432,18 @@ def create_start_screen():
         )
         messagebox.showinfo("Game Rules", rules_text)
 
-        start_window.destroy()
+        main_frame.destroy()
         game_window.deiconify()
         update_status()
         game.running = True
         money_tick()
 
     # --- Start Button ---
-    start_btn = tk.Button(start_window, text="Start Game", font=("Arial",18,"bold"), command=start_game)
+    start_btn = tk.Button(main_frame, text="Start Game", font=("Arial",18,"bold"), command=start_game)
     start_btn.pack(pady=20)
     start_btn.config(bg="#22C55E", fg="#0F172A", activebackground="#16A34A")
 
-    start_window.mainloop()
+    main_frame.mainloop()
 
 
    
