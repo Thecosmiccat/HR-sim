@@ -437,7 +437,7 @@ message = tk.StringVar()
 
 # Status frame with bars
 status_frame = tk.Frame(game_window, bg="#1E293B")
-# status_frame.pack(pady=5, fill="x")  # moved later
+status_frame.pack(pady=5, fill="x")  # back to original position
 
 # Style for progress bars
 style = ttk.Style()
@@ -567,7 +567,7 @@ for b in buttons:
     b.pack(fill="x", pady=2)
     b.configure(bg="#334155", fg="#D3DDF9", activebackground="#1E293B", activeforeground="#22C55E", relief="flat", bd=0)
 
-status_frame.pack(pady=5, fill="x")  # now after buttons
+# status_frame.pack(pady=5, fill="x")  # back after buttons
 
 # Upgrade buttons
 upgrade_frame = tk.Frame(game_window, bg="#0F172A")
