@@ -775,7 +775,7 @@ def create_start_screen():
 
         # Starting adjustments
         if game.difficulty == "Easy":
-            game.money = 10000000000
+            game.money = 30000
             game.market_share = 15
         elif game.difficulty == "Hard":
             game.money = 15000
