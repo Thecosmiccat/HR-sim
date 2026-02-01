@@ -28,6 +28,10 @@ class Game:
         self.company = ""
         self.difficulty = "Normal"
         self.running = False
+    
+        self.orders = []
+        self.order_cooldown = 0
+
         self.upgrades = {
             "Better Office": False,
             "Automation": False,
@@ -176,6 +180,90 @@ def random_event():
     else:
         add_news(desc)
         return None
+    
+def generate_order():
+    if game.order_cooldown > 0 or len(game.orders) >= 3:
+        return
+
+    max_value = 1_000_000
+    base = 2000 + (game.market_share * 500) + (game.reputation * 100)
+    value = min(max_value, int(base))
+
+    success_rate = min(95, int(
+        40 +
+        game.productivity * 0.3 +
+        game.reputation * 0.2 +
+        game.customer_satisfaction * 0.2
+    ))
+
+    penalty = random.choice(["productivity", "reputation", "money"])
+
+    game.orders.append({
+        "value": value,
+        "success": success_rate,
+        "penalty": penalty
+    })
+
+    game.order_cooldown = 2
+    update_orders_ui()
+
+
+
+def resolve_order(index, accepted):
+    order = game.orders.pop(index)
+    game.order_cooldown = 2
+
+    if not accepted:
+        add_news("Order declined.")
+        update_orders_ui()
+        return
+
+    roll = random.randint(1, 100)
+    if roll <= order["success"]:
+        game.money += order["value"]
+        game.market_share += 1
+        add_news(f"Order success! Earned ${order['value']:,}")
+    else:
+        if order["penalty"] == "productivity":
+            game.productivity -= 10
+        elif order["penalty"] == "reputation":
+            game.reputation -= 10
+        else:
+            game.money -= order["value"] // 2
+        add_news("Order failed! Penalty applied.")
+
+    update_status()
+    update_orders_ui()
+
+
+def update_orders_ui():
+    for w in orders_frame.winfo_children():
+        w.destroy()
+
+    for i, o in enumerate(game.orders):
+        frame = tk.Frame(orders_frame, bg="#334155", bd=2, relief="ridge")
+        frame.pack(pady=5, fill="x", padx=5)
+
+        tk.Label(frame,
+            text=f"Value: ${o['value']:,}\nSuccess: {o['success']}%\nPenalty: -{o['penalty'].capitalize()}",
+            bg="#334155",
+            fg="#F1F5F9",
+            justify="left"
+        ).pack(pady=4)
+
+        btn_frame = tk.Frame(frame, bg="#334155")
+        btn_frame.pack(fill="x")
+
+        tk.Button(btn_frame, text="Accept",
+                  command=lambda idx=i: resolve_order(idx, True),
+                  bg="#22C55E", fg="#0F172A").pack(side="left", expand=True, fill="x", padx=2)
+
+        tk.Button(btn_frame, text="Decline",
+                  command=lambda idx=i: resolve_order(idx, False),
+                  bg="#EF4444", fg="white").pack(side="right", expand=True, fill="x", padx=2)
+
+
+
 
 def check_achievements():
     for ach, data in game.achievements.items():
@@ -206,8 +294,11 @@ def monthly_tick():
     if not game.running:
         return
 
-    leadership_effect()
+    # Decrease order cooldown
+    if game.order_cooldown > 0:
+        game.order_cooldown -= 1
 
+    leadership_effect()
     profit = calculate_profit()
     game.money += profit
 
@@ -230,14 +321,18 @@ def monthly_tick():
     # Competitor growth
     comp_growth = random.randint(1, 3)
     game.competitor_market_share += comp_growth
-    game.market_share = max(0, game.market_share - 0.5 + min(2, game.money // 100000))  # slight decay, but money helps
+    game.market_share = max(0, game.market_share - 0.5 + min(2, game.money // 100000))
+
+    # Generate new orders
+    generate_order()
 
     random_event()
     check_achievements()
     update_status()
     check_game_end()
 
-    game_window.after(3000, monthly_tick)  # every 3 seconds for demo
+    game_window.after(3000, monthly_tick)
+
 
 def next_year():
     leadership_effect()
@@ -445,11 +540,33 @@ game_window.title("HR Management Simulator")
 game_window.geometry("800x900")
 game_window.withdraw()
 
+main_frame = tk.Frame(game_window, bg="#0F172A")
+main_frame.pack(fill="both", expand=True)
+
+left_frame = tk.Frame(main_frame, bg="#0F172A")
+left_frame.pack(side="left", fill="both", expand=True)
+
+right_frame = tk.Frame(main_frame, bg="#1E293B", width=260)
+right_frame.pack(side="right", fill="y")
+
+tk.Label(
+    right_frame,
+    text="ACTIVE ORDERS",
+    font=("Arial", 14, "bold"),
+    bg="#1E293B",
+    fg="#22C55E"
+).pack(pady=10)
+
+orders_frame = tk.Frame(right_frame, bg="#1E293B")
+orders_frame.pack(fill="both", expand=True)
+
+
+
 status = tk.StringVar()
 message = tk.StringVar()
 
 # Status frame with bars
-status_frame = tk.Frame(game_window, bg="#1E293B")
+status_frame = tk.Frame(left_frame, bg="#1E293B")
 status_frame.pack(pady=5, fill="x")  # back to original position
 
 # Style for progress bars
@@ -617,6 +734,9 @@ for dept in ["HR", "IT", "PR"]:
     btn.configure(bg="#475569", fg="#D3DDF9", activebackground="#1E293B", activeforeground="#22C55E", relief="flat", bd=0)
     dept_buttons[dept] = btn
 
+
+
+
 # Restart button
 restart_btn = tk.Button(
     game_window,
@@ -683,7 +803,7 @@ def create_start_screen():
 
         # Starting adjustments
         if game.difficulty == "Easy":
-            game.money = 1000000
+            game.money = 10000000000
             game.market_share = 15
         elif game.difficulty == "Hard":
             game.money = 15000
