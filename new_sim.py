@@ -28,6 +28,10 @@ class Game:
         self.company = ""
         self.difficulty = "Normal"
         self.running = False
+    
+        self.active_order = None
+        self.order_cooldown = 0
+
         self.upgrades = {
             "Better Office": False,
             "Automation": False,
@@ -176,6 +180,75 @@ def random_event():
     else:
         add_news(desc)
         return None
+    
+def generate_order():
+    if game.active_order or game.order_cooldown > 0:
+        return
+
+    max_value = 1_000_000
+    base = 2000 + (game.market_share * 500) + (game.reputation * 100)
+    value = min(max_value, int(base))
+
+    success_rate = min(95, int(
+        40 +
+        game.productivity * 0.3 +
+        game.reputation * 0.2 +
+        game.customer_satisfaction * 0.2
+    ))
+
+    penalty = random.choice(["productivity", "reputation", "money"])
+
+    game.active_order = {
+        "value": value,
+        "success": success_rate,
+        "penalty": penalty
+    }
+
+    show_order_ui()
+
+
+def resolve_order(accepted):
+    order = game.active_order
+    game.active_order = None
+    game.order_cooldown = 2
+
+    if not accepted:
+        add_news("Order declined.")
+        hide_order_ui()
+        return
+
+    roll = random.randint(1, 100)
+    if roll <= order["success"]:
+        game.money += order["value"]
+        game.market_share += 1
+        add_news(f"Order success! Earned ${order['value']:,}")
+    else:
+        if order["penalty"] == "productivity":
+            game.productivity -= 10
+        elif order["penalty"] == "reputation":
+            game.reputation -= 10
+        else:
+            game.money -= order["value"] // 2
+        add_news("Order failed! Penalty applied.")
+
+    update_status()
+    hide_order_ui()
+
+
+def show_order_ui():
+    o = game.active_order
+    order_label.config(
+        text=f"NEW ORDER\n"
+             f"Value: ${o['value']:,}\n"
+             f"Success Chance: {o['success']}%\n"
+             f"Failure Penalty: -{o['penalty'].capitalize()}"
+    )
+    order_frame.pack(pady=8, fill="x")
+
+
+def hide_order_ui():
+    order_frame.pack_forget()
+
 
 def check_achievements():
     for ach, data in game.achievements.items():
@@ -231,6 +304,11 @@ def monthly_tick():
     comp_growth = random.randint(1, 3)
     game.competitor_market_share += comp_growth
     game.market_share = max(0, game.market_share - 0.5 + min(2, game.money // 100000))  # slight decay, but money helps
+
+    if game.order_cooldown > 0:
+        game.order_cooldown -= 1
+    else:
+        generate_order()
 
     random_event()
     check_achievements()
@@ -617,6 +695,20 @@ for dept in ["HR", "IT", "PR"]:
     btn.configure(bg="#475569", fg="#D3DDF9", activebackground="#1E293B", activeforeground="#22C55E", relief="flat", bd=0)
     dept_buttons[dept] = btn
 
+# Order frame
+order_frame = tk.Frame(game_window, bg="#1E293B", bd=3, relief="ridge")
+order_label = tk.Label(order_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", justify="left")
+order_label.pack(pady=5)
+
+accept_btn = tk.Button(order_frame, text="Accept", command=lambda: resolve_order(True))
+decline_btn = tk.Button(order_frame, text="Decline", command=lambda: resolve_order(False))
+
+accept_btn.pack(side="left", expand=True, fill="x", padx=5, pady=5)
+decline_btn.pack(side="right", expand=True, fill="x", padx=5, pady=5)
+
+order_frame.pack_forget()
+
+
 # Restart button
 restart_btn = tk.Button(
     game_window,
@@ -683,7 +775,7 @@ def create_start_screen():
 
         # Starting adjustments
         if game.difficulty == "Easy":
-            game.money = 30000
+            game.money = 10000000000
             game.market_share = 15
         elif game.difficulty == "Hard":
             game.money = 15000
