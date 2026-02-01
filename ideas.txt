@@ -4,3 +4,5 @@ fix the years thing ingame(done)
 make the menu more pretty idk how  (elaberate pls)
 Fuck you jeffrey (ok?)
 medium J buying option (what?)
+elaboration of jews momnet
+mkae it so that instead of money per sec being focused the most for earning you would also have orders at the start that scale up depending on ur upgrades and money until they reach their max limit like idk a mil, the orders would be the most useful at the start of the game. Make it so they are like a rectangle box with an accept or decline button and the info of the order, including the chaces for failing or not, each order has a diffrent chance at succeeding ( u earn the money ) or failing ( you lose some stats like productivity or reputation or just money )
