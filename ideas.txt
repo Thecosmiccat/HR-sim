@@ -1,8 +1,6 @@
-Make it so that after you win you have an option to continue and get achievements, something like: reach the global gdp which is 117 tillion, make the same amount of money as USAs total debt, or smth like that. (done)
-make the progress bars in the game closer to the things they are related to (done=
-fix the years thing ingame(done)
-make the menu more pretty idk how  (elaberate pls)
-Fuck you jeffrey (ok?)
-medium J buying option (what?)
-elaboration of jews momnet
-mkae it so that instead of money per sec being focused the most for earning you would also have orders at the start that scale up depending on ur upgrades and money until they reach their max limit like idk a mil, the orders would be the most useful at the start of the game. Make it so they are like a rectangle box with an accept or decline button and the info of the order, including the chaces for failing or not, each order has a diffrent chance at succeeding ( u earn the money ) or failing ( you lose some stats like productivity or reputation or just money )
+  Balance the game 
+Make the orders a bit bigger
+make it so that when you buy an upgrade instead of just spamming upgrade bought and the stats multiple times it will show .... bought +15 reputation (x1) if you buy another one it would be .... bought +15 reputation (x2) then (x3) and so on so it doesnt flood the news feed
+redesign the stats menu as it is very confusing ( ill add more on ts later )
+MEDIUm j buying option
+make a pop up when you gain an achievemnt with a description of the achievement and a small png of it idk, laso majke a button in the mnu to see your achievement we will
