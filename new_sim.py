@@ -1,5 +1,6 @@
 # HR Management Simulator by Jeffrey
 # Inspired by ideas from Danila, Audrey, and Lyra
+#pr rebyata
 
 print("Starting HR Management Simulator... Please wait for the window to appear.")
 
@@ -239,30 +240,62 @@ def resolve_order(index, accepted):
 
 
 def update_orders_ui():
+    # Clear current children
     for w in orders_frame.winfo_children():
         w.destroy()
 
+    # Measure a single order widget to determine required height
+    # We'll size the orders_frame to exactly fit 3 orders so none get clipped
+    sample_count = 3
+    per_height = 0
+    if True:
+        sample = tk.Frame(orders_frame, bg="#99bbff", bd=2, relief="ridge")
+        lbl = tk.Label(sample,
+            text=f"Value: $0\nSuccess: 0%\nPenalty: -None",
+            bg="#99bbff",
+            fg="#0F172A",
+            justify="center",
+            font=("Arial", 12),
+            anchor="center"
+        )
+        lbl.pack(pady=6, fill="x", padx=4)
+        btn_frame_s = tk.Frame(sample, bg="#99bbff")
+        btn_frame_s.pack(fill="x")
+        tk.Button(btn_frame_s, text="Accept", bg="#22C55E", fg="#0F172A", font=("Arial", 10, "bold")).pack(side="left", expand=True, fill="x", padx=2)
+        tk.Button(btn_frame_s, text="Decline", bg="#EF4444", fg="white", font=("Arial", 10, "bold")).pack(side="right", expand=True, fill="x", padx=2)
+        # Temporarily pack to allow geometry calculation then remove
+        sample.pack(pady=5, fill="x", padx=5)
+        orders_frame.update_idletasks()
+        per_height = sample.winfo_height()
+        sample.destroy()
+
+    total_height = per_height * sample_count + 10
+    orders_frame.config(height=total_height)
+
+    # Now create real order widgets
     for i, o in enumerate(game.orders):
-        frame = tk.Frame(orders_frame, bg="#334155", bd=2, relief="ridge")
+        frame = tk.Frame(orders_frame, bg="#99bbff", bd=2, relief="ridge")
         frame.pack(pady=5, fill="x", padx=5)
 
         tk.Label(frame,
             text=f"Value: ${o['value']:,}\nSuccess: {o['success']}%\nPenalty: -{o['penalty'].capitalize()}",
-            bg="#334155",
-            fg="#F1F5F9",
-            justify="left"
-        ).pack(pady=4)
+            bg="#99bbff",
+            fg="#0F172A",
+            justify="center",
+            font=("Arial", 12),
+            anchor="center"
+        ).pack(pady=6, fill="x", padx=4)
 
-        btn_frame = tk.Frame(frame, bg="#334155")
+        btn_frame = tk.Frame(frame, bg="#99bbff")
         btn_frame.pack(fill="x")
 
         tk.Button(btn_frame, text="Accept",
                   command=lambda idx=i: resolve_order(idx, True),
-                  bg="#22C55E", fg="#0F172A").pack(side="left", expand=True, fill="x", padx=2)
+                  bg="#22C55E", fg="#0F172A", font=("Arial", 10, "bold")).pack(side="left", expand=True, fill="x", padx=2)
 
         tk.Button(btn_frame, text="Decline",
                   command=lambda idx=i: resolve_order(idx, False),
-                  bg="#EF4444", fg="white").pack(side="right", expand=True, fill="x", padx=2)
+                  bg="#EF4444", fg="white", font=("Arial", 10, "bold")).pack(side="right", expand=True, fill="x", padx=2)
 
 
 
@@ -371,6 +404,9 @@ def check_game_end():
 
 def end_game():
     game.running = False
+    # Remove any active orders immediately from the UI
+    game.orders.clear()
+    update_orders_ui()
     disable_buttons()
     restart_btn.pack(pady=10)
 
@@ -388,6 +424,8 @@ def restart_game():
     restart_btn.pack_forget()
     update_upgrade_buttons()
     update_dept_buttons()
+    # Ensure orders UI reflects the reset state
+    update_orders_ui()
     game_window.withdraw()
     create_start_screen()
 
@@ -575,8 +613,10 @@ main_frame.pack(fill="both", expand=True)
 left_frame = tk.Frame(main_frame, bg="#0F172A")
 left_frame.pack(side="left", fill="both", expand=True)
 
-right_frame = tk.Frame(main_frame, bg="#1E293B", width=260)
+right_frame = tk.Frame(main_frame, bg="#1E293B", width=340)
 right_frame.pack(side="right", fill="y")
+# Keep the right frame at the specified width so the Active Orders box is larger
+right_frame.pack_propagate(False)
 
 tk.Label(
     right_frame,
@@ -586,8 +626,17 @@ tk.Label(
     fg="#22C55E"
 ).pack(pady=10)
 
-orders_frame = tk.Frame(right_frame, bg="#1E293B")
+orders_frame = tk.Frame(
+    right_frame,
+    bg="#1E293B",
+    height=640,
+    bd=0,
+    highlightbackground="#FFFFFF",
+    highlightthickness=1
+)
 orders_frame.pack(fill="both", expand=True)
+# Keep fixed minimum height so up to three orders display fully
+orders_frame.pack_propagate(False)
 
 
 
