@@ -274,14 +274,17 @@ def check_achievements():
                 if game.money >= data["target"]:
                     data["unlocked"] = True
                     add_news(f"Achievement Unlocked: {ach} - {data['desc']}")
+                    messagebox.showinfo("Achievement Unlocked!", f"{ach}\n\n{data['desc']}")
             elif ach == "Market Dominator":
                 if game.market_share >= data["target"]:
                     data["unlocked"] = True
                     add_news(f"Achievement Unlocked: {ach} - {data['desc']}")
+                    messagebox.showinfo("Achievement Unlocked!", f"{ach}\n\n{data['desc']}")
             elif ach == "Employee Empire":
                 if game.employees >= data["target"]:
                     data["unlocked"] = True
                     add_news(f"Achievement Unlocked: {ach} - {data['desc']}")
+                    messagebox.showinfo("Achievement Unlocked!", f"{ach}\n\n{data['desc']}")
 
 def add_news(msg):
     game.news_feed.append(f"Year {game.year}, Month {game.month}: {msg}")
