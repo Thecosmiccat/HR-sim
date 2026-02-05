@@ -2,7 +2,6 @@
 # Inspired by ideas from Danila, Audrey, and Lyra
 #pr rebyata
 
-print("Starting HR Management Simulator... Please wait for the window to appear.")
 
 import tkinter as tk
 import tkinter.messagebox as messagebox
@@ -337,7 +336,44 @@ def check_achievements():
                     messagebox.showinfo("Achievement Unlocked!", f"{ach}\n\n{data['desc']}")
 
 def add_news(msg):
-    game.news_feed.append(f"Year {game.year}, Month {game.month}: {msg}")
+    timestamp = f"Year {game.year}, Month {game.month}: "
+    stackable_prefixes = (
+        "Training session!",
+        "PR campaign successful!",
+        "Bonuses paid!",
+        "New hire!",
+        "Marketing campaign!",
+        "R&D investment!",
+        "Customer service focus!",
+        "Upgraded ",
+        "Hired "
+    )
+
+    def _is_stackable(m):
+        return m.startswith(stackable_prefixes)
+
+    if game.news_feed and _is_stackable(msg):
+        last = game.news_feed[-1]
+        last_body = last
+        last_count = 1
+        if ": " in last_body:
+            last_body = last_body.split(": ", 1)[1]
+        if " (x" in last_body and last_body.endswith(")"):
+            try:
+                count_str = last_body.rsplit(" (x", 1)[1][:-1]
+                last_count = int(count_str)
+                last_body = last_body.rsplit(" (x", 1)[0]
+            except ValueError:
+                last_count = 1
+        if last_body == msg:
+            game.news_feed[-1] = f"{timestamp}{msg} (x{last_count + 1})"
+        else:
+            game.news_feed.append(f"{timestamp}{msg} (x1)")
+    else:
+        if _is_stackable(msg):
+            game.news_feed.append(f"{timestamp}{msg} (x1)")
+        else:
+            game.news_feed.append(f"{timestamp}{msg}")
     if len(game.news_feed) > 10:
         game.news_feed.pop(0)
     news_box.config(state="normal")
