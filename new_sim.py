@@ -8,6 +8,7 @@ import tkinter.messagebox as messagebox
 import random
 import time
 from tkinter import ttk
+import tkinter.font as tkfont
 
 # ---------------- GAME STATE ----------------
 class Game:
@@ -884,45 +885,76 @@ def create_start_screen():
     start_window = tk.Tk()
     start_window.configure(bg="#0F172A")
     start_window.title("Start Your Empire")
-    start_window.geometry("600x700")
+    # Enter fullscreen immediately when the menu opens
+    try:
+        start_window.attributes("-fullscreen", True)
+    except Exception:
+        try:
+            start_window.state('zoomed')
+        except Exception:
+            start_window.geometry("800x900")
 
-    tk.Label(start_window, text="HR Management Simulator", font=("Arial", 24, "bold"), bg="#0F172A", fg="#1E3A8A").pack(pady=20)
+    # Animated title using a dynamic font - bright and large
+    title_label = tk.Label(start_window, text="HR MANAGEMENT SIMULATOR", font=("Arial", 40, "bold"), bg="#0F172A", fg="#00FF00")
+    title_label.pack(pady=15)
+
+    # Simple pulsing animation for the title - keep callback referenced on the window
+    def _start_title_pulse():
+        sizes = [40, 42, 44]
+        start_window.pulse_idx = 0
+        def _animate():
+            # If the window has been destroyed, stop scheduling
+            try:
+                if not start_window.winfo_exists():
+                    return
+            except Exception:
+                return
+            current = sizes[start_window.pulse_idx % len(sizes)]
+            title_label.config(font=("Arial", current, "bold"))
+            start_window.pulse_idx += 1
+            # keep a reference to the callback so Tcl doesn't drop it
+            start_window._title_pulse_cb = _animate
+            # Slower pulse: schedule next frame after 400ms
+            start_window.after(400, start_window._title_pulse_cb)
+        start_window._title_pulse_cb = _animate
+        _animate()
+    _start_title_pulse()
 
     company_var = tk.StringVar(value="")
     leadership_var = tk.StringVar(value="democratic")
     difficulty_var = tk.StringVar(value="Normal")
 
-    company_label = tk.Label(start_window, text="Selected Company: None", font=("Arial", 14), bg="#1E293B", fg="#1E3A8A")
+    company_label = tk.Label(start_window, text="Selected Company: None", font=("Arial", 13, "bold"), bg="#1E293B", fg="#FFD700")
     company_label.pack(pady=5)
-    leader_label = tk.Label(start_window, text="Selected Leadership: Democratic", font=("Arial", 14), bg="#1E293B", fg="#1E3A8A")
+    leader_label = tk.Label(start_window, text="Selected Leadership: Democratic", font=("Arial", 13, "bold"), bg="#1E293B", fg="#FFD700")
     leader_label.pack(pady=5)
-    diff_label = tk.Label(start_window, text="Selected Difficulty: Normal", font=("Arial", 14), bg="#1E293B", fg="#1E3A8A")
+    diff_label = tk.Label(start_window, text="Selected Difficulty: Normal", font=("Arial", 13, "bold"), bg="#1E293B", fg="#FFD700")
     diff_label.pack(pady=5)
 
-    tk.Label(start_window, text="Choose Your Company", font=("Arial", 18, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=10)
+    tk.Label(start_window, text="Choose Your Company", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=8)
     def set_company(c):
         company_var.set(c)
         company_label.config(text=f"Selected Company: {c}", fg="green")
-    tk.Button(start_window, text="Tech Startup", command=lambda: set_company("Tech Startup")).pack(pady=2)
-    tk.Button(start_window, text="Restaurant Chain", command=lambda: set_company("Restaurant Chain")).pack(pady=2)
-    tk.Button(start_window, text="Manufacturing", command=lambda: set_company("Manufacturing")).pack(pady=2)
-    tk.Button(start_window, text="Entertainment", command=lambda: set_company("Entertainment")).pack(pady=2)
+    tk.Button(start_window, text="Tech Startup", command=lambda: set_company("Tech Startup"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Restaurant Chain", command=lambda: set_company("Restaurant Chain"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Manufacturing", command=lambda: set_company("Manufacturing"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Entertainment", command=lambda: set_company("Entertainment"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
 
-    tk.Label(start_window, text="Choose Leadership Style", font=("Arial", 18, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=10)
+    tk.Label(start_window, text="Choose Leadership Style", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=8)
     def set_leadership(l):
         leadership_var.set(l)
         leader_label.config(text=f"Selected Leadership: {l.capitalize()}", fg="green")
-    tk.Button(start_window, text="Autocratic", command=lambda: set_leadership("autocratic")).pack(pady=2)
-    tk.Button(start_window, text="Democratic", command=lambda: set_leadership("democratic")).pack(pady=2)
-    tk.Button(start_window, text="Laissez-faire", command=lambda: set_leadership("laissez-faire")).pack(pady=2)
+    tk.Button(start_window, text="Autocratic", command=lambda: set_leadership("autocratic"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Democratic", command=lambda: set_leadership("democratic"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Laissez-faire", command=lambda: set_leadership("laissez-faire"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
 
-    tk.Label(start_window, text="Choose Difficulty", font=("Arial", 18, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=10)
+    tk.Label(start_window, text="Choose Difficulty", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=8)
     def set_difficulty(d):
         difficulty_var.set(d)
         diff_label.config(text=f"Selected Difficulty: {d}", fg="green")
-    tk.Button(start_window, text="Easy", command=lambda: set_difficulty("Easy")).pack(pady=2)
-    tk.Button(start_window, text="Normal", command=lambda: set_difficulty("Normal")).pack(pady=2)
-    tk.Button(start_window, text="Hard", command=lambda: set_difficulty("Hard")).pack(pady=2)
+    tk.Button(start_window, text="Easy", command=lambda: set_difficulty("Easy"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Normal", command=lambda: set_difficulty("Normal"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Hard", command=lambda: set_difficulty("Hard"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
 
     def start_game():
         if company_var.get() == "":
@@ -989,7 +1021,7 @@ def create_start_screen():
         game.running = True
         monthly_tick()
 
-    tk.Button(start_window, text="Start", font=("Arial", 18, "bold"), command=start_game, bg="#22C55E", fg="#0F172A").pack(pady=20)
+    tk.Button(start_window, text="Start", font=("Arial", 20, "bold"), command=start_game, bg="#22C55E", fg="#0F172A", width=24).pack(pady=20, ipady=8)
 
     start_window.mainloop()
 
