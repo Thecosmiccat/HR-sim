@@ -245,7 +245,7 @@ def update_orders_ui():
         w.destroy()
 
     # Measure a single order widget to determine required height
-    # We'll size the orders_frame to exactly fit 3 orders so none get clipped
+    # We'll size the orders_frame to fit up to 3 orders so none get clipped
     sample_count = 3
     per_height = 0
     if True:
@@ -258,19 +258,36 @@ def update_orders_ui():
             font=("Arial", 12),
             anchor="center"
         )
-        lbl.pack(pady=6, fill="x", padx=4)
         btn_frame_s = tk.Frame(sample, bg="#99bbff")
         btn_frame_s.pack(fill="x")
         tk.Button(btn_frame_s, text="Accept", bg="#22C55E", fg="#0F172A", font=("Arial", 10, "bold")).pack(side="left", expand=True, fill="x", padx=2)
         tk.Button(btn_frame_s, text="Decline", bg="#EF4444", fg="white", font=("Arial", 10, "bold")).pack(side="right", expand=True, fill="x", padx=2)
         # Temporarily pack to allow geometry calculation then remove
-        sample.pack(pady=5, fill="x", padx=5)
-        orders_frame.update_idletasks()
+        lbl.pack(pady=2, fill="x", padx=3)
+        sample.pack(pady=2, fill="x", padx=3)
+        # Ensure the whole window processes geometry so we get a reliable height
+        try:
+            game_window.update_idletasks()
+        except Exception:
+            orders_frame.update_idletasks()
         per_height = sample.winfo_height()
+        # Enforce a sensible minimum per-order height so three items never get squashed
+        per_height = max(per_height, 130)
         sample.destroy()
 
-    total_height = per_height * sample_count + 10
+    # Reserve space for exactly three orders so the panel fits tightly
+    total_height = per_height * sample_count
     orders_frame.config(height=total_height)
+    # Keep the right-side container slightly larger than the orders area
+    try:
+        right_frame.config(height=total_height + 2)
+    except Exception:
+        pass
+    # Ensure geometry is recalculated so the change takes effect immediately
+    try:
+        game_window.update_idletasks()
+    except Exception:
+        orders_frame.update_idletasks()
 
     # Now create real order widgets
     for i, o in enumerate(game.orders):
@@ -921,6 +938,15 @@ def create_start_screen():
 
         start_window.destroy()
         game_window.deiconify()
+        # Enter fullscreen immediately when the game window appears
+        try:
+            game_window.attributes("-fullscreen", True)
+        except Exception:
+            # Fallback to maximized window on platforms that don't support fullscreen attribute
+            try:
+                game_window.state('zoomed')
+            except Exception:
+                pass
         update_status()
         update_upgrade_buttons()
         update_dept_buttons()
