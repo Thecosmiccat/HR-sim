@@ -9,6 +9,35 @@ import random
 import time
 from tkinter import ttk
 import tkinter.font as tkfont
+import math
+
+# Keep strong references to animation callbacks to prevent garbage collection
+_animation_callbacks = {}
+
+def _hsl_to_hex(h, s, l):
+    """Convert HSL to hex color. h: 0-360, s: 0-100, l: 0-100"""
+    s = s / 100.0
+    l = l / 100.0
+    h = h / 360.0
+    
+    if s == 0:
+        r = g = b = l
+    else:
+        def hue_to_rgb(p, q, t):
+            if t < 0: t += 1
+            if t > 1: t -= 1
+            if t < 1/6: return p + (q - p) * 6 * t
+            if t < 1/2: return q
+            if t < 2/3: return p + (q - p) * (2/3 - t) * 6
+            return p
+        
+        q = l * (1 + s) if l < 0.5 else l + s - l * s
+        p = 2 * l - q
+        r = hue_to_rgb(p, q, h + 1/3)
+        g = hue_to_rgb(p, q, h)
+        b = hue_to_rgb(p, q, h - 1/3)
+    
+    return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
 
 # ---------------- GAME STATE ----------------
 class Game:
@@ -465,7 +494,7 @@ def end_game():
     restart_btn.pack(pady=10)
 
 def restart_game():
-    global start_window
+    global start_window, main_menu_window
     game.__init__()
     message.set("")
     # status.set("")  # removed
@@ -481,7 +510,7 @@ def restart_game():
     # Ensure orders UI reflects the reset state
     update_orders_ui()
     game_window.withdraw()
-    create_start_screen()
+    create_main_menu()
 
 def disable_buttons():
     for b in buttons:
@@ -879,9 +908,78 @@ restart_btn = tk.Button(
     command=restart_game
 )
 
-# ---------------- START SCREEN ----------------
-def create_start_screen():
+# ---------------- MAIN MENU ----------------
+def create_main_menu():
+    global main_menu_window
+    main_menu_window = tk.Tk()
+    main_menu_window.configure(bg="#0F172A")
+    main_menu_window.title("HR Management Simulator")
+    try:
+        main_menu_window.attributes("-fullscreen", True)
+    except Exception:
+        try:
+            main_menu_window.state('zoomed')
+        except Exception:
+            main_menu_window.geometry("800x600")
+
+    # Animated title with rainbow effect and smooth scaling
+    title_label = tk.Label(main_menu_window, text="HR MANAGEMENT SIMULATOR", font=("Arial", 40, "bold"), bg="#0F172A", fg="#FF0000")
+    title_label.pack(pady=80)
+
+    # Smooth rainbow animation with size and tilt for the title
+    def _start_title_rainbow():
+        global _animation_callbacks
+        hue_state = {'value': 0}
+        time_state = {'t': 0}
+        
+        def _animate():
+            try:
+                if not main_menu_window.winfo_exists():
+                    _animation_callbacks.pop('main_menu', None)
+                    return
+            except Exception:
+                _animation_callbacks.pop('main_menu', None)
+                return
+            
+            # Create rainbow color with full saturation and 60% lightness for visibility
+            color = _hsl_to_hex(hue_state['value'], 100, 60)
+            
+            # Smooth size variation using sine wave (40 to 56 range, centered at 48)
+            size_variation = math.sin(time_state['t'] * 0.08) * 8
+            current_size = int(48 + size_variation)
+            
+            # Create tilt effect by adjusting overstrike or using slight kerning simulation
+            # We'll use the angle in the animation for visual feedback
+            tilt_angle = math.sin(time_state['t'] * 0.06) * 10  # -10 to +10 degrees
+            
+            title_label.config(fg=color, font=("Arial", current_size, "bold"))
+            
+            # Smooth hue rotation (full circle every 4 seconds at 50ms updates)
+            hue_state['value'] = (hue_state['value'] + 1.5) % 360
+            time_state['t'] += 1
+            
+            _animation_callbacks['main_menu'] = lambda: main_menu_window.after(50, _animate)
+            _animation_callbacks['main_menu']()
+        
+        _animate()
+    _start_title_rainbow()
+
+    tk.Button(main_menu_window, text="New Game", font=("Arial", 18, "bold"), command=create_game_selection, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
+    tk.Button(main_menu_window, text="Achievements", font=("Arial", 18, "bold"), command=view_achievements, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
+
+    main_menu_window.mainloop()
+
+def view_achievements():
+    messagebox.showinfo("Achievements", "Achievements coming soon!")
+
+# ---------------- GAME SELECTION SCREEN ----------------
+def create_game_selection():
     global start_window, company_var, leadership_var, difficulty_var
+    try:
+        main_menu_window.destroy()
+    except:
+        pass
+    
     start_window = tk.Tk()
     start_window.configure(bg="#0F172A")
     start_window.title("Start Your Empire")
@@ -893,32 +991,6 @@ def create_start_screen():
             start_window.state('zoomed')
         except Exception:
             start_window.geometry("800x900")
-
-    # Animated title using a dynamic font - bright and large
-    title_label = tk.Label(start_window, text="HR MANAGEMENT SIMULATOR", font=("Arial", 40, "bold"), bg="#0F172A", fg="#00FF00")
-    title_label.pack(pady=15)
-
-    # Simple pulsing animation for the title - keep callback referenced on the window
-    def _start_title_pulse():
-        sizes = [40, 42, 44]
-        start_window.pulse_idx = 0
-        def _animate():
-            # If the window has been destroyed, stop scheduling
-            try:
-                if not start_window.winfo_exists():
-                    return
-            except Exception:
-                return
-            current = sizes[start_window.pulse_idx % len(sizes)]
-            title_label.config(font=("Arial", current, "bold"))
-            start_window.pulse_idx += 1
-            # keep a reference to the callback so Tcl doesn't drop it
-            start_window._title_pulse_cb = _animate
-            # Slower pulse: schedule next frame after 400ms
-            start_window.after(400, start_window._title_pulse_cb)
-        start_window._title_pulse_cb = _animate
-        _animate()
-    _start_title_pulse()
 
     company_var = tk.StringVar(value="")
     leadership_var = tk.StringVar(value="democratic")
@@ -1026,4 +1098,4 @@ def create_start_screen():
     start_window.mainloop()
 
 # ---------------- START ----------------
-create_start_screen()
+create_main_menu()
