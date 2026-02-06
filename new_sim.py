@@ -3,7 +3,7 @@
 # Inspired by ideas from Danila, Audrey, and Lyra
 #pr rebyata
 
-print("Loading HR Management Simulator...")
+
 
 import tkinter as tk
 import tkinter.messagebox as messagebox
