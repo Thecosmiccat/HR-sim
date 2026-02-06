@@ -1,7 +1,9 @@
+
 # HR Management Simulator by Jeffrey
 # Inspired by ideas from Danila, Audrey, and Lyra
 #pr rebyata
 
+print("Loading HR Management Simulator...")
 
 import tkinter as tk
 import tkinter.messagebox as messagebox
@@ -10,6 +12,10 @@ import time
 from tkinter import ttk
 import tkinter.font as tkfont
 import math
+
+def clamp_stats():
+    game.market_share = min(100, max(0, game.market_share))
+
 
 # Keep strong references to animation callbacks to prevent garbage collection
 _animation_callbacks = {}
@@ -201,6 +207,7 @@ def random_event():
         game.market_share += 3
         game.money += 3000
         add_news("Market boom! Gained market share and money.")
+        game.market_share = min(100, game.market_share + 2)
         return None
     elif event == "economic_downturn":
         game.money -= 2000
@@ -253,7 +260,7 @@ def resolve_order(index, accepted):
     roll = random.randint(1, 100)
     if roll <= order["success"]:
         game.money += order["value"]
-        game.market_share += 1
+        game.market_share = min(100, game.market_share + 1)
         add_news(f"Order success! Earned ${order['value']:,}")
     else:
         if order["penalty"] == "productivity":
@@ -442,13 +449,15 @@ def monthly_tick():
     # Competitor growth
     comp_growth = random.randint(1, 3)
     game.competitor_market_share += comp_growth
-    game.market_share = max(0, game.market_share - 0.5 + min(2, game.money // 100000))
+    game.market_share = min(100, max(0, game.market_share - 0.5 + min(2, game.money // 100000)))
+
 
     # Generate new orders
     generate_order()
 
     random_event()
     check_achievements()
+    clamp_stats()
     update_status()
     check_game_end()
 
@@ -964,8 +973,8 @@ def create_main_menu():
         _animate()
     _start_title_rainbow()
 
-    tk.Button(main_menu_window, text="New Game", font=("Arial", 18, "bold"), command=create_game_selection, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
-    tk.Button(main_menu_window, text="Achievements", font=("Arial", 18, "bold"), command=view_achievements, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
+    tk.Button(main_menu_window, text="New Game", font=("Comic Sans MS", 50, "bold"), command=create_game_selection, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
+    tk.Button(main_menu_window, text="Achievements", font=("Comic Sans MS", 50, "bold"), command=view_achievements, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
 
     main_menu_window.mainloop()
 
