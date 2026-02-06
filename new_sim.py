@@ -3,10 +3,13 @@
 # Inspired by ideas from Danila, Audrey, and Lyra
 #pr rebyata
 
-
+print("Loading HR Management Simulator...")
 
 import tkinter as tk
 import tkinter.messagebox as messagebox
+import tkinter.simpledialog as simpledialog
+import json
+import os
 import random
 import time
 from tkinter import ttk
@@ -64,6 +67,7 @@ class Game:
         self.company = ""
         self.difficulty = "Normal"
         self.running = False
+        self.company_type = ""
     
         self.orders = []
         self.order_cooldown = 0
@@ -500,6 +504,7 @@ def end_game():
     game.orders.clear()
     update_orders_ui()
     disable_buttons()
+    save_exit_btn.place_forget()
     restart_btn.pack(pady=10)
 
 def restart_game():
@@ -514,6 +519,7 @@ def restart_game():
     for b in buttons:
         b.config(state="normal")
     restart_btn.pack_forget()
+    save_exit_btn.place_forget()
     update_upgrade_buttons()
     update_dept_buttons()
     # Ensure orders UI reflects the reset state
@@ -539,7 +545,7 @@ def pr_campaign():
     cost = 5000
     if game.money >= cost:
         game.money -= cost
-        game.reputation = game.reputation + 15
+        game.reputation = min(100, game.reputation + 15)
         add_news("PR campaign successful! Reputation +15")
         update_status()
     else:
@@ -862,6 +868,8 @@ buttons = [
     tk.Button(scroll_frame, text="Customer Service ($2000) - Satisfaction +15, Reputation +3", command=customer_service),
     tk.Button(scroll_frame, text="Change Leadership (Cycle Styles)", command=change_leadership),
     tk.Button(scroll_frame, text="Special Ability (Style-Dependent)", command=special_ability)
+    ,
+    tk.Button(scroll_frame, text="Save Game", command=lambda: save_game())
 ]
 
 for b in buttons:
@@ -915,6 +923,26 @@ restart_btn = tk.Button(
     bg="#22C55E",
     fg="#0F172A",
     command=restart_game
+)
+
+# Save & Exit button
+def save_and_exit():
+    """Save the game and return to main menu."""
+    try:
+        save_game()
+        message.set("Saving and exiting...")
+        game_window.update()  # Process the message update
+        game_window.after(500, restart_game)  # Delay slightly to let save complete
+    except Exception as e:
+        message.set(f"Error: {str(e)}")
+
+save_exit_btn = tk.Button(
+    game_window,
+    text="Save & Exit",
+    font=("Arial", 12),
+    bg="#F97316",
+    fg="#0F172A",
+    command=save_and_exit
 )
 
 # ---------------- MAIN MENU ----------------
@@ -974,6 +1002,7 @@ def create_main_menu():
     _start_title_rainbow()
 
     tk.Button(main_menu_window, text="New Game", font=("Comic Sans MS", 50, "bold"), command=create_game_selection, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
+    tk.Button(main_menu_window, text="Load Game", font=("Comic Sans MS", 50, "bold"), command=load_game_dialog, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
     tk.Button(main_menu_window, text="Achievements", font=("Comic Sans MS", 50, "bold"), command=view_achievements, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
 
     main_menu_window.mainloop()
@@ -1004,6 +1033,7 @@ def create_game_selection():
     company_var = tk.StringVar(value="")
     leadership_var = tk.StringVar(value="democratic")
     difficulty_var = tk.StringVar(value="Normal")
+    business_name_var = tk.StringVar(value="")
 
     company_label = tk.Label(start_window, text="Selected Company: None", font=("Arial", 13, "bold"), bg="#1E293B", fg="#FFD700")
     company_label.pack(pady=5)
@@ -1011,6 +1041,10 @@ def create_game_selection():
     leader_label.pack(pady=5)
     diff_label = tk.Label(start_window, text="Selected Difficulty: Normal", font=("Arial", 13, "bold"), bg="#1E293B", fg="#FFD700")
     diff_label.pack(pady=5)
+
+    tk.Label(start_window, text="Business Name:", font=("Arial", 16, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=6)
+    name_entry = tk.Entry(start_window, textvariable=business_name_var, font=("Arial", 14), width=30)
+    name_entry.pack(pady=2)
 
     tk.Label(start_window, text="Choose Your Company", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=8)
     def set_company(c):
@@ -1038,10 +1072,16 @@ def create_game_selection():
     tk.Button(start_window, text="Hard", command=lambda: set_difficulty("Hard"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
 
     def start_game():
-        if company_var.get() == "":
-            company_label.config(text="Please select a company!", fg="red")
+        # Business name required (read directly from entry to avoid StringVar sync issues)
+        name_text = name_entry.get().strip()
+        if name_text == "":
+            messagebox.showerror("Name Required", "Please enter a business name.")
             return
-        game.company = company_var.get()
+        # If player didn't pick a company type, default to 'Custom'
+        selected_type = company_var.get().strip() if company_var.get().strip() != "" else "Custom"
+        # Business name is the player-chosen company name; store type separately
+        game.company = name_text
+        game.company_type = selected_type
         game.leader_style = leadership_var.get()
         game.difficulty = difficulty_var.get()
 
@@ -1056,16 +1096,16 @@ def create_game_selection():
             game.money = 20000
             game.market_share = 10
 
-        if game.company == "Tech Startup":
+        if getattr(game, 'company_type', None) == "Tech Startup":
             game.innovation += 10
             game.productivity -= 5
-        elif game.company == "Restaurant Chain":
+        elif getattr(game, 'company_type', None) == "Restaurant Chain":
             game.customer_satisfaction += 10
             game.reputation += 5
-        elif game.company == "Manufacturing":
+        elif getattr(game, 'company_type', None) == "Manufacturing":
             game.productivity += 10
             game.morale -= 5
-        elif game.company == "Entertainment":
+        elif getattr(game, 'company_type', None) == "Entertainment":
             game.marketing += 10
             game.reputation += 5
 
@@ -1099,12 +1139,129 @@ def create_game_selection():
         update_status()
         update_upgrade_buttons()
         update_dept_buttons()
+        save_exit_btn.place(relx=0.02, rely=0.95, anchor='sw', width=110, height=40)
+        save_exit_btn.lift()
         game.running = True
         monthly_tick()
+
+        # Auto-save initial state so it appears in load list
+        save_game()
 
     tk.Button(start_window, text="Start", font=("Arial", 20, "bold"), command=start_game, bg="#22C55E", fg="#0F172A", width=24).pack(pady=20, ipady=8)
 
     start_window.mainloop()
+
+# ---------------- SAVE / LOAD ----------------
+def ensure_saves_dir():
+    saves_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saves')
+    if not os.path.exists(saves_dir):
+        try:
+            os.makedirs(saves_dir, exist_ok=True)
+        except PermissionError:
+            # Fallback to temp directory if permission denied
+            saves_dir = os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Temp', 'HR_Sim_Saves')
+            os.makedirs(saves_dir, exist_ok=True)
+    return saves_dir
+
+def get_saves_dir():
+    """Get the saves directory path."""
+    return ensure_saves_dir()
+
+def _sanitize_filename(name):
+    cleaned = "".join(c for c in name if c.isalnum() or c in (' ', '-', '_'))
+    return cleaned.strip().replace(' ', '_')
+
+def save_game():
+    saves_dir = get_saves_dir()
+    if not getattr(game, 'company', None) or str(game.company).strip() == "":
+        # ask for a name
+        name = simpledialog.askstring("Save Game", "Enter business name for save:")
+        if not name:
+            message.set("Save cancelled.")
+            return
+        game.company = name.strip()
+    filename = _sanitize_filename(game.company) + ".json"
+    path = os.path.join(saves_dir, filename)
+    try:
+        # We only save plain data; Game contains simple types
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(game.__dict__, f, indent=2)
+        message.set(f"Game saved as {filename}")
+        add_news(f"Game saved: {filename}")
+    except Exception as e:
+        message.set(f"Save failed: {e}")
+
+def load_game_file(path):
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except Exception as e:
+        messagebox.showerror("Load Error", f"Failed to load: {e}")
+        return
+    # Reset and apply loaded values
+    game.__init__()
+    for k, v in data.items():
+        try:
+            setattr(game, k, v)
+        except Exception:
+            pass
+
+    # Update UI after loading
+    try:
+        update_upgrade_buttons()
+        update_dept_buttons()
+        update_orders_ui()
+        update_status()
+        # Refresh news feed UI from loaded data
+        try:
+            news_box.config(state="normal")
+            news_box.delete(1.0, tk.END)
+            news_box.insert(tk.END, "\n".join(reversed(game.news_feed)))
+            news_box.config(state="disabled")
+        except Exception:
+            pass
+    except Exception:
+        pass
+    game.running = True
+    try:
+        game_window.deiconify()
+        game_window.attributes("-fullscreen", True)
+    except Exception:
+        try:
+            game_window.state('zoomed')
+        except Exception:
+            pass
+    monthly_tick()
+
+def load_game_dialog():
+    saves_dir = get_saves_dir()
+    files = [f for f in os.listdir(saves_dir) if f.endswith('.json')]
+    if not files:
+        messagebox.showinfo("Load Game", "No save files found.")
+        return
+    win = tk.Toplevel()
+    win.title("Load Game")
+    win.configure(bg="#0F172A")
+    lb = tk.Listbox(win, width=60, height=12)
+    for f in files:
+        lb.insert(tk.END, f)
+    lb.pack(padx=10, pady=10)
+    def do_load():
+        sel = lb.curselection()
+        if not sel:
+            return
+        fname = lb.get(sel[0])
+        path = os.path.join(saves_dir, fname)
+        load_game_file(path)
+        try:
+            win.destroy()
+        except:
+            pass
+        try:
+            main_menu_window.destroy()
+        except:
+            pass
+    tk.Button(win, text="Load", command=do_load, bg="#22C55E", fg="#0F172A").pack(pady=6)
 
 # ---------------- START ----------------
 create_main_menu()
