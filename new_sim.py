@@ -539,7 +539,7 @@ def pr_campaign():
     cost = 5000
     if game.money >= cost:
         game.money -= cost
-        game.reputation = min(100, game.reputation + 15)
+        game.reputation = game.reputation + 15
         add_news("PR campaign successful! Reputation +15")
         update_status()
     else:
