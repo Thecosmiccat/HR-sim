@@ -1,13 +1,49 @@
+
 # HR Management Simulator by Jeffrey
 # Inspired by ideas from Danila, Audrey, and Lyra
+#pr rebyata
 
-print("Starting HR Management Simulator... Please wait for the window to appear.")
+
 
 import tkinter as tk
 import tkinter.messagebox as messagebox
 import random
 import time
 from tkinter import ttk
+import tkinter.font as tkfont
+import math
+
+def clamp_stats():
+    game.market_share = min(100, max(0, game.market_share))
+
+
+# Keep strong references to animation callbacks to prevent garbage collection
+_animation_callbacks = {}
+
+def _hsl_to_hex(h, s, l):
+    """Convert HSL to hex color. h: 0-360, s: 0-100, l: 0-100"""
+    s = s / 100.0
+    l = l / 100.0
+    h = h / 360.0
+    
+    if s == 0:
+        r = g = b = l
+    else:
+        def hue_to_rgb(p, q, t):
+            if t < 0: t += 1
+            if t > 1: t -= 1
+            if t < 1/6: return p + (q - p) * 6 * t
+            if t < 1/2: return q
+            if t < 2/3: return p + (q - p) * (2/3 - t) * 6
+            return p
+        
+        q = l * (1 + s) if l < 0.5 else l + s - l * s
+        p = 2 * l - q
+        r = hue_to_rgb(p, q, h + 1/3)
+        g = hue_to_rgb(p, q, h)
+        b = hue_to_rgb(p, q, h - 1/3)
+    
+    return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
 
 # ---------------- GAME STATE ----------------
 class Game:
@@ -171,6 +207,7 @@ def random_event():
         game.market_share += 3
         game.money += 3000
         add_news("Market boom! Gained market share and money.")
+        game.market_share = min(100, game.market_share + 2)
         return None
     elif event == "economic_downturn":
         game.money -= 2000
@@ -189,12 +226,13 @@ def generate_order():
     base = 2000 + (game.market_share * 500) + (game.reputation * 100)
     value = min(max_value, int(base))
 
-    success_rate = min(95, int(
-        40 +
-        game.productivity * 0.3 +
-        game.reputation * 0.2 +
-        game.customer_satisfaction * 0.2
-    ))
+    # New, slower scaling success rate
+    base_success = 30  # base chance for any order
+    prod_factor = game.productivity * 0.2  # smaller effect than before
+    rep_factor = game.reputation * 0.15
+    sat_factor = game.customer_satisfaction * 0.15
+
+    success_rate = min(90, int(base_success + prod_factor + rep_factor + sat_factor))
 
     penalty = random.choice(["productivity", "reputation", "money"])
 
@@ -206,6 +244,7 @@ def generate_order():
 
     game.order_cooldown = 2
     update_orders_ui()
+
 
 
 
@@ -221,7 +260,7 @@ def resolve_order(index, accepted):
     roll = random.randint(1, 100)
     if roll <= order["success"]:
         game.money += order["value"]
-        game.market_share += 1
+        game.market_share = min(100, game.market_share + 1)
         add_news(f"Order success! Earned ${order['value']:,}")
     else:
         if order["penalty"] == "productivity":
@@ -237,30 +276,79 @@ def resolve_order(index, accepted):
 
 
 def update_orders_ui():
+    # Clear current children
     for w in orders_frame.winfo_children():
         w.destroy()
 
+    # Measure a single order widget to determine required height
+    # We'll size the orders_frame to fit up to 3 orders so none get clipped
+    sample_count = 3
+    per_height = 0
+    if True:
+        sample = tk.Frame(orders_frame, bg="#99bbff", bd=2, relief="ridge")
+        lbl = tk.Label(sample,
+            text=f"Value: $0\nSuccess: 0%\nPenalty: -None",
+            bg="#99bbff",
+            fg="#0F172A",
+            justify="center",
+            font=("Arial", 12),
+            anchor="center"
+        )
+        btn_frame_s = tk.Frame(sample, bg="#99bbff")
+        btn_frame_s.pack(fill="x")
+        tk.Button(btn_frame_s, text="Accept", bg="#22C55E", fg="#0F172A", font=("Arial", 10, "bold")).pack(side="left", expand=True, fill="x", padx=2)
+        tk.Button(btn_frame_s, text="Decline", bg="#EF4444", fg="white", font=("Arial", 10, "bold")).pack(side="right", expand=True, fill="x", padx=2)
+        # Temporarily pack to allow geometry calculation then remove
+        lbl.pack(pady=2, fill="x", padx=3)
+        sample.pack(pady=2, fill="x", padx=3)
+        # Ensure the whole window processes geometry so we get a reliable height
+        try:
+            game_window.update_idletasks()
+        except Exception:
+            orders_frame.update_idletasks()
+        per_height = sample.winfo_height()
+        # Enforce a sensible minimum per-order height so three items never get squashed
+        per_height = max(per_height, 130)
+        sample.destroy()
+
+    # Reserve space for exactly three orders so the panel fits tightly
+    total_height = per_height * sample_count
+    orders_frame.config(height=total_height)
+    # Keep the right-side container slightly larger than the orders area
+    try:
+        right_frame.config(height=total_height + 2)
+    except Exception:
+        pass
+    # Ensure geometry is recalculated so the change takes effect immediately
+    try:
+        game_window.update_idletasks()
+    except Exception:
+        orders_frame.update_idletasks()
+
+    # Now create real order widgets
     for i, o in enumerate(game.orders):
-        frame = tk.Frame(orders_frame, bg="#334155", bd=2, relief="ridge")
+        frame = tk.Frame(orders_frame, bg="#99bbff", bd=2, relief="ridge")
         frame.pack(pady=5, fill="x", padx=5)
 
         tk.Label(frame,
             text=f"Value: ${o['value']:,}\nSuccess: {o['success']}%\nPenalty: -{o['penalty'].capitalize()}",
-            bg="#334155",
-            fg="#F1F5F9",
-            justify="left"
-        ).pack(pady=4)
+            bg="#99bbff",
+            fg="#0F172A",
+            justify="center",
+            font=("Arial", 12),
+            anchor="center"
+        ).pack(pady=6, fill="x", padx=4)
 
-        btn_frame = tk.Frame(frame, bg="#334155")
+        btn_frame = tk.Frame(frame, bg="#99bbff")
         btn_frame.pack(fill="x")
 
         tk.Button(btn_frame, text="Accept",
                   command=lambda idx=i: resolve_order(idx, True),
-                  bg="#22C55E", fg="#0F172A").pack(side="left", expand=True, fill="x", padx=2)
+                  bg="#22C55E", fg="#0F172A", font=("Arial", 10, "bold")).pack(side="left", expand=True, fill="x", padx=2)
 
         tk.Button(btn_frame, text="Decline",
                   command=lambda idx=i: resolve_order(idx, False),
-                  bg="#EF4444", fg="white").pack(side="right", expand=True, fill="x", padx=2)
+                  bg="#EF4444", fg="white", font=("Arial", 10, "bold")).pack(side="right", expand=True, fill="x", padx=2)
 
 
 
@@ -272,17 +360,57 @@ def check_achievements():
                 if game.money >= data["target"]:
                     data["unlocked"] = True
                     add_news(f"Achievement Unlocked: {ach} - {data['desc']}")
+                    messagebox.showinfo("Achievement Unlocked!", f"{ach}\n\n{data['desc']}")
             elif ach == "Market Dominator":
                 if game.market_share >= data["target"]:
                     data["unlocked"] = True
                     add_news(f"Achievement Unlocked: {ach} - {data['desc']}")
+                    messagebox.showinfo("Achievement Unlocked!", f"{ach}\n\n{data['desc']}")
             elif ach == "Employee Empire":
                 if game.employees >= data["target"]:
                     data["unlocked"] = True
                     add_news(f"Achievement Unlocked: {ach} - {data['desc']}")
+                    messagebox.showinfo("Achievement Unlocked!", f"{ach}\n\n{data['desc']}")
 
 def add_news(msg):
-    game.news_feed.append(f"Year {game.year}, Month {game.month}: {msg}")
+    timestamp = f"Year {game.year}, Month {game.month}: "
+    stackable_prefixes = (
+        "Training session!",
+        "PR campaign successful!",
+        "Bonuses paid!",
+        "New hire!",
+        "Marketing campaign!",
+        "R&D investment!",
+        "Customer service focus!",
+        "Upgraded ",
+        "Hired "
+    )
+
+    def _is_stackable(m):
+        return m.startswith(stackable_prefixes)
+
+    if game.news_feed and _is_stackable(msg):
+        last = game.news_feed[-1]
+        last_body = last
+        last_count = 1
+        if ": " in last_body:
+            last_body = last_body.split(": ", 1)[1]
+        if " (x" in last_body and last_body.endswith(")"):
+            try:
+                count_str = last_body.rsplit(" (x", 1)[1][:-1]
+                last_count = int(count_str)
+                last_body = last_body.rsplit(" (x", 1)[0]
+            except ValueError:
+                last_count = 1
+        if last_body == msg:
+            game.news_feed[-1] = f"{timestamp}{msg} (x{last_count + 1})"
+        else:
+            game.news_feed.append(f"{timestamp}{msg} (x1)")
+    else:
+        if _is_stackable(msg):
+            game.news_feed.append(f"{timestamp}{msg} (x1)")
+        else:
+            game.news_feed.append(f"{timestamp}{msg}")
     if len(game.news_feed) > 10:
         game.news_feed.pop(0)
     news_box.config(state="normal")
@@ -321,13 +449,15 @@ def monthly_tick():
     # Competitor growth
     comp_growth = random.randint(1, 3)
     game.competitor_market_share += comp_growth
-    game.market_share = max(0, game.market_share - 0.5 + min(2, game.money // 100000))
+    game.market_share = min(100, max(0, game.market_share - 0.5 + min(2, game.money // 100000)))
+
 
     # Generate new orders
     generate_order()
 
     random_event()
     check_achievements()
+    clamp_stats()
     update_status()
     check_game_end()
 
@@ -366,11 +496,14 @@ def check_game_end():
 
 def end_game():
     game.running = False
+    # Remove any active orders immediately from the UI
+    game.orders.clear()
+    update_orders_ui()
     disable_buttons()
     restart_btn.pack(pady=10)
 
 def restart_game():
-    global start_window
+    global start_window, main_menu_window
     game.__init__()
     message.set("")
     # status.set("")  # removed
@@ -383,8 +516,10 @@ def restart_game():
     restart_btn.pack_forget()
     update_upgrade_buttons()
     update_dept_buttons()
+    # Ensure orders UI reflects the reset state
+    update_orders_ui()
     game_window.withdraw()
-    create_start_screen()
+    create_main_menu()
 
 def disable_buttons():
     for b in buttons:
@@ -540,14 +675,40 @@ game_window.title("HR Management Simulator")
 game_window.geometry("800x900")
 game_window.withdraw()
 
-main_frame = tk.Frame(game_window, bg="#0F172A")
+# Scrollable root
+scroll_canvas = tk.Canvas(game_window, bg="#0F172A", highlightthickness=0)
+scrollbar = tk.Scrollbar(game_window, orient="vertical", command=scroll_canvas.yview)
+scroll_canvas.configure(yscrollcommand=scrollbar.set)
+scrollbar.pack(side="right", fill="y")
+scroll_canvas.pack(side="left", fill="both", expand=True)
+
+scroll_frame = tk.Frame(scroll_canvas, bg="#0F172A")
+scroll_window = scroll_canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+
+def _sync_scroll_region(event=None):
+    scroll_canvas.configure(scrollregion=scroll_canvas.bbox("all"))
+
+def _sync_scroll_width(event=None):
+    scroll_canvas.itemconfigure(scroll_window, width=scroll_canvas.winfo_width())
+
+scroll_frame.bind("<Configure>", _sync_scroll_region)
+scroll_canvas.bind("<Configure>", _sync_scroll_width)
+
+def _on_mousewheel(event):
+    scroll_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+scroll_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+main_frame = tk.Frame(scroll_frame, bg="#0F172A")
 main_frame.pack(fill="both", expand=True)
 
 left_frame = tk.Frame(main_frame, bg="#0F172A")
 left_frame.pack(side="left", fill="both", expand=True)
 
-right_frame = tk.Frame(main_frame, bg="#1E293B", width=260)
+right_frame = tk.Frame(main_frame, bg="#1E293B", width=340)
 right_frame.pack(side="right", fill="y")
+# Keep the right frame at the specified width so the Active Orders box is larger
+right_frame.pack_propagate(False)
 
 tk.Label(
     right_frame,
@@ -557,8 +718,17 @@ tk.Label(
     fg="#22C55E"
 ).pack(pady=10)
 
-orders_frame = tk.Frame(right_frame, bg="#1E293B")
+orders_frame = tk.Frame(
+    right_frame,
+    bg="#1E293B",
+    height=640,
+    bd=0,
+    highlightbackground="#FFFFFF",
+    highlightthickness=1
+)
 orders_frame.pack(fill="both", expand=True)
+# Keep fixed minimum height so up to three orders display fully
+orders_frame.pack_propagate(False)
 
 
 
@@ -630,7 +800,7 @@ achievements_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E
 achievements_label.pack(fill="x")
 
 profit_label = tk.Label(
-    game_window,
+    scroll_frame,
     text="Monthly Profit: $0",
     font=("Arial", 16, "bold"),
     bg="#0F172A",
@@ -639,7 +809,7 @@ profit_label = tk.Label(
 profit_label.pack(pady=2)
 
 message_label = tk.Label(
-    game_window,
+    scroll_frame,
     textvariable=message,
     font=("Comic Sans MS", 14),
     fg="#F1F5F9",
@@ -652,7 +822,7 @@ message_label = tk.Label(
 message_label.pack(pady=2)
 
 news_label = tk.Label(
-    game_window,
+    scroll_frame,
     text="News Feed:",
     font=("Arial", 14, "bold"),
     bg="#0F172A",
@@ -661,7 +831,7 @@ news_label = tk.Label(
 news_label.pack(pady=5)
 
 # News feed with scrollbar
-news_frame = tk.Frame(game_window, bg="#0F172A")
+news_frame = tk.Frame(scroll_frame, bg="#0F172A")
 news_frame.pack(pady=5)
 news_scrollbar = tk.Scrollbar(news_frame)
 news_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -683,15 +853,15 @@ news_box.config(state="disabled")  # Make it read-only
 
 # Buttons
 buttons = [
-    tk.Button(game_window, text="Training ($5000) - Productivity +15", command=training),
-    tk.Button(game_window, text="PR Campaign ($5000) - Reputation +15", command=pr_campaign),
-    tk.Button(game_window, text="Bonuses ($4000) - Morale +20", command=bonus),
-    tk.Button(game_window, text="Recruit ($3000) - +1 Employee", command=recruit),
-    tk.Button(game_window, text="Marketing ($4000) - Marketing +15, Reputation +5", command=marketing_campaign),
-    tk.Button(game_window, text="R&D ($6000) - Innovation +20", command=r_and_d),
-    tk.Button(game_window, text="Customer Service ($2000) - Satisfaction +15, Reputation +3", command=customer_service),
-    tk.Button(game_window, text="Change Leadership (Cycle Styles)", command=change_leadership),
-    tk.Button(game_window, text="Special Ability (Style-Dependent)", command=special_ability)
+    tk.Button(scroll_frame, text="Training ($5000) - Productivity +15", command=training),
+    tk.Button(scroll_frame, text="PR Campaign ($5000) - Reputation +15", command=pr_campaign),
+    tk.Button(scroll_frame, text="Bonuses ($4000) - Morale +20", command=bonus),
+    tk.Button(scroll_frame, text="Recruit ($3000) - +1 Employee", command=recruit),
+    tk.Button(scroll_frame, text="Marketing ($4000) - Marketing +15, Reputation +5", command=marketing_campaign),
+    tk.Button(scroll_frame, text="R&D ($6000) - Innovation +20", command=r_and_d),
+    tk.Button(scroll_frame, text="Customer Service ($2000) - Satisfaction +15, Reputation +3", command=customer_service),
+    tk.Button(scroll_frame, text="Change Leadership (Cycle Styles)", command=change_leadership),
+    tk.Button(scroll_frame, text="Special Ability (Style-Dependent)", command=special_ability)
 ]
 
 for b in buttons:
@@ -701,7 +871,7 @@ for b in buttons:
 # status_frame.pack(pady=5, fill="x")  # back after buttons
 
 # Upgrade buttons
-upgrade_frame = tk.Frame(game_window, bg="#0F172A")
+upgrade_frame = tk.Frame(scroll_frame, bg="#0F172A")
 upgrade_frame.pack(pady=10)
 tk.Label(upgrade_frame, text="Upgrades:", font=("Arial", 14, "bold"), bg="#0F172A", fg="#22C55E").pack()
 upgrade_buttons = {}
@@ -718,7 +888,7 @@ for up in ["Better Office", "Automation", "Coffee Machine"]:
     upgrade_buttons[up] = btn
 
 # Department buttons
-dept_frame = tk.Frame(game_window, bg="#0F172A")
+dept_frame = tk.Frame(scroll_frame, bg="#0F172A")
 dept_frame.pack(pady=10)
 tk.Label(dept_frame, text="Departments:", font=("Arial", 14, "bold"), bg="#0F172A", fg="#22C55E").pack()
 dept_buttons = {}
@@ -739,7 +909,7 @@ for dept in ["HR", "IT", "PR"]:
 
 # Restart button
 restart_btn = tk.Button(
-    game_window,
+    scroll_frame,
     text="Restart Game",
     font=("Arial", 16),
     bg="#22C55E",
@@ -747,51 +917,125 @@ restart_btn = tk.Button(
     command=restart_game
 )
 
-# ---------------- START SCREEN ----------------
-def create_start_screen():
+# ---------------- MAIN MENU ----------------
+def create_main_menu():
+    global main_menu_window
+    main_menu_window = tk.Tk()
+    main_menu_window.configure(bg="#0F172A")
+    main_menu_window.title("HR Management Simulator")
+    try:
+        main_menu_window.attributes("-fullscreen", True)
+    except Exception:
+        try:
+            main_menu_window.state('zoomed')
+        except Exception:
+            main_menu_window.geometry("800x600")
+
+    # Animated title with rainbow effect and smooth scaling
+    title_label = tk.Label(main_menu_window, text="HR MANAGEMENT SIMULATOR", font=("Arial", 40, "bold"), bg="#0F172A", fg="#FF0000")
+    title_label.pack(pady=80)
+
+    # Smooth rainbow animation with size and tilt for the title
+    def _start_title_rainbow():
+        global _animation_callbacks
+        hue_state = {'value': 0}
+        time_state = {'t': 0}
+        
+        def _animate():
+            try:
+                if not main_menu_window.winfo_exists():
+                    _animation_callbacks.pop('main_menu', None)
+                    return
+            except Exception:
+                _animation_callbacks.pop('main_menu', None)
+                return
+            
+            # Create rainbow color with full saturation and 60% lightness for visibility
+            color = _hsl_to_hex(hue_state['value'], 100, 60)
+            
+            # Smooth size variation using sine wave (40 to 56 range, centered at 48)
+            size_variation = math.sin(time_state['t'] * 0.08) * 8
+            current_size = int(48 + size_variation)
+            
+            # Create tilt effect by adjusting overstrike or using slight kerning simulation
+            # We'll use the angle in the animation for visual feedback
+            tilt_angle = math.sin(time_state['t'] * 0.06) * 10  # -10 to +10 degrees
+            
+            title_label.config(fg=color, font=("Arial", current_size, "bold"))
+            
+            # Smooth hue rotation (full circle every 4 seconds at 50ms updates)
+            hue_state['value'] = (hue_state['value'] + 1.5) % 360
+            time_state['t'] += 1
+            
+            _animation_callbacks['main_menu'] = lambda: main_menu_window.after(50, _animate)
+            _animation_callbacks['main_menu']()
+        
+        _animate()
+    _start_title_rainbow()
+
+    tk.Button(main_menu_window, text="New Game", font=("Comic Sans MS", 50, "bold"), command=create_game_selection, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
+    tk.Button(main_menu_window, text="Achievements", font=("Comic Sans MS", 50, "bold"), command=view_achievements, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
+
+    main_menu_window.mainloop()
+
+def view_achievements():
+    messagebox.showinfo("Achievements", "Achievements coming soon!")
+
+# ---------------- GAME SELECTION SCREEN ----------------
+def create_game_selection():
     global start_window, company_var, leadership_var, difficulty_var
+    try:
+        main_menu_window.destroy()
+    except:
+        pass
+    
     start_window = tk.Tk()
     start_window.configure(bg="#0F172A")
     start_window.title("Start Your Empire")
-    start_window.geometry("600x700")
-
-    tk.Label(start_window, text="HR Management Simulator", font=("Arial", 24, "bold"), bg="#0F172A", fg="#1E3A8A").pack(pady=20)
+    # Enter fullscreen immediately when the menu opens
+    try:
+        start_window.attributes("-fullscreen", True)
+    except Exception:
+        try:
+            start_window.state('zoomed')
+        except Exception:
+            start_window.geometry("800x900")
 
     company_var = tk.StringVar(value="")
     leadership_var = tk.StringVar(value="democratic")
     difficulty_var = tk.StringVar(value="Normal")
 
-    company_label = tk.Label(start_window, text="Selected Company: None", font=("Arial", 14), bg="#1E293B", fg="#1E3A8A")
+    company_label = tk.Label(start_window, text="Selected Company: None", font=("Arial", 13, "bold"), bg="#1E293B", fg="#FFD700")
     company_label.pack(pady=5)
-    leader_label = tk.Label(start_window, text="Selected Leadership: Democratic", font=("Arial", 14), bg="#1E293B", fg="#1E3A8A")
+    leader_label = tk.Label(start_window, text="Selected Leadership: Democratic", font=("Arial", 13, "bold"), bg="#1E293B", fg="#FFD700")
     leader_label.pack(pady=5)
-    diff_label = tk.Label(start_window, text="Selected Difficulty: Normal", font=("Arial", 14), bg="#1E293B", fg="#1E3A8A")
+    diff_label = tk.Label(start_window, text="Selected Difficulty: Normal", font=("Arial", 13, "bold"), bg="#1E293B", fg="#FFD700")
     diff_label.pack(pady=5)
 
-    tk.Label(start_window, text="Choose Your Company", font=("Arial", 18, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=10)
+    tk.Label(start_window, text="Choose Your Company", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=8)
     def set_company(c):
         company_var.set(c)
         company_label.config(text=f"Selected Company: {c}", fg="green")
-    tk.Button(start_window, text="Tech Startup", command=lambda: set_company("Tech Startup")).pack(pady=2)
-    tk.Button(start_window, text="Restaurant Chain", command=lambda: set_company("Restaurant Chain")).pack(pady=2)
-    tk.Button(start_window, text="Manufacturing", command=lambda: set_company("Manufacturing")).pack(pady=2)
-    tk.Button(start_window, text="Entertainment", command=lambda: set_company("Entertainment")).pack(pady=2)
+    tk.Button(start_window, text="Tech Startup", command=lambda: set_company("Tech Startup"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Restaurant Chain", command=lambda: set_company("Restaurant Chain"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Manufacturing", command=lambda: set_company("Manufacturing"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Entertainment", command=lambda: set_company("Entertainment"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
 
-    tk.Label(start_window, text="Choose Leadership Style", font=("Arial", 18, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=10)
+    tk.Label(start_window, text="Choose Leadership Style", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=8)
     def set_leadership(l):
         leadership_var.set(l)
         leader_label.config(text=f"Selected Leadership: {l.capitalize()}", fg="green")
-    tk.Button(start_window, text="Autocratic", command=lambda: set_leadership("autocratic")).pack(pady=2)
-    tk.Button(start_window, text="Democratic", command=lambda: set_leadership("democratic")).pack(pady=2)
-    tk.Button(start_window, text="Laissez-faire", command=lambda: set_leadership("laissez-faire")).pack(pady=2)
+    tk.Button(start_window, text="Autocratic", command=lambda: set_leadership("autocratic"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Democratic", command=lambda: set_leadership("democratic"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Laissez-faire", command=lambda: set_leadership("laissez-faire"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
 
-    tk.Label(start_window, text="Choose Difficulty", font=("Arial", 18, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=10)
+    tk.Label(start_window, text="Choose Difficulty", font=("Arial", 20, "bold"), bg="#0F172A", fg="#22C55E").pack(pady=8)
     def set_difficulty(d):
         difficulty_var.set(d)
         diff_label.config(text=f"Selected Difficulty: {d}", fg="green")
-    tk.Button(start_window, text="Easy", command=lambda: set_difficulty("Easy")).pack(pady=2)
-    tk.Button(start_window, text="Normal", command=lambda: set_difficulty("Normal")).pack(pady=2)
-    tk.Button(start_window, text="Hard", command=lambda: set_difficulty("Hard")).pack(pady=2)
+    tk.Button(start_window, text="Easy", command=lambda: set_difficulty("Easy"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Normal", command=lambda: set_difficulty("Normal"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
+    tk.Button(start_window, text="Hard", command=lambda: set_difficulty("Hard"), font=("Arial", 14), width=22).pack(pady=6, ipady=6)
 
     def start_game():
         if company_var.get() == "":
@@ -803,7 +1047,7 @@ def create_start_screen():
 
         # Starting adjustments
         if game.difficulty == "Easy":
-            game.money = 10000000000
+            game.money = 30000
             game.market_share = 15
         elif game.difficulty == "Hard":
             game.money = 15000
@@ -843,15 +1087,24 @@ def create_start_screen():
 
         start_window.destroy()
         game_window.deiconify()
+        # Enter fullscreen immediately when the game window appears
+        try:
+            game_window.attributes("-fullscreen", True)
+        except Exception:
+            # Fallback to maximized window on platforms that don't support fullscreen attribute
+            try:
+                game_window.state('zoomed')
+            except Exception:
+                pass
         update_status()
         update_upgrade_buttons()
         update_dept_buttons()
         game.running = True
         monthly_tick()
 
-    tk.Button(start_window, text="Start Empire", font=("Arial", 18, "bold"), command=start_game, bg="#22C55E", fg="#0F172A").pack(pady=20)
+    tk.Button(start_window, text="Start", font=("Arial", 20, "bold"), command=start_game, bg="#22C55E", fg="#0F172A", width=24).pack(pady=20, ipady=8)
 
     start_window.mainloop()
 
 # ---------------- START ----------------
-create_start_screen()
+create_main_menu()
