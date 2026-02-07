@@ -11,7 +11,7 @@
   "market_share": 19.5,
   "leader_style": "autocratic",
   "competitor_market_share": 22,
-  "money": 33534,
+  "money": 566587686575478980343,
   "company": "aas",
   "difficulty": "Easy",
   "running": true,
@@ -67,4 +67,5 @@
     }
   },
   "continue_mode": false
+
 }
