@@ -874,7 +874,7 @@ buttons = [
 
 for b in buttons:
     b.pack(fill="x", pady=2)
-    b.configure(bg="#334155", fg="#D3DDF9", activebackground="#1E293B", activeforeground="#22C55E", relief="flat", bd=0)
+    b.configure(bg="#334155", fg="#D3DDF9", activebackground="#1E293B", activeforeground="#22C55E", relief="flat", bd=0, font=("Arial", 9, "bold"))
 
 # status_frame.pack(pady=5, fill="x")  # back after buttons
 
@@ -960,8 +960,14 @@ def create_main_menu():
             main_menu_window.geometry("800x600")
 
     # Animated title with rainbow effect and smooth scaling
-    title_label = tk.Label(main_menu_window, text="HR MANAGEMENT SIMULATOR", font=("Arial", 40, "bold"), bg="#0F172A", fg="#FF0000")
-    title_label.pack(pady=80)
+    main_menu_window.update_idletasks()
+    menu_width = max(800, main_menu_window.winfo_screenwidth())
+    title_container = tk.Frame(main_menu_window, bg="#0F172A", height=140, width=menu_width)
+    title_container.pack(pady=(60, 30), fill="x")
+    title_container.pack_propagate(False)
+
+    title_label = tk.Label(title_container, text="HR MANAGEMENT SIMULATOR", font=("Arial", 40, "bold"), bg="#0F172A", fg="#FF0000")
+    title_label.place(relx=0.5, rely=0.5, anchor="center")
 
     # Smooth rainbow animation with size and tilt for the title
     def _start_title_rainbow():
@@ -1001,9 +1007,13 @@ def create_main_menu():
         _animate()
     _start_title_rainbow()
 
-    tk.Button(main_menu_window, text="New Game", font=("Comic Sans MS", 50, "bold"), command=create_game_selection, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
-    tk.Button(main_menu_window, text="Load Game", font=("Comic Sans MS", 50, "bold"), command=load_game_dialog, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
-    tk.Button(main_menu_window, text="Achievements", font=("Comic Sans MS", 50, "bold"), command=view_achievements, bg="white", fg="#0F172A", width=27, height=2, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=15, padx=10)
+    buttons_frame = tk.Frame(main_menu_window, bg="#0F172A")
+    buttons_frame.pack(pady=(25, 0))
+
+    button_font = ("Comic Sans MS", 46, "bold")
+    tk.Button(buttons_frame, text="New Game", font=button_font, command=create_game_selection, bg="white", fg="#0F172A", width=20, height=1, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=12, padx=10)
+    tk.Button(buttons_frame, text="Load Game", font=button_font, command=load_game_dialog, bg="white", fg="#0F172A", width=20, height=1, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=12, padx=10)
+    tk.Button(buttons_frame, text="Achievements", font=button_font, command=view_achievements, bg="white", fg="#0F172A", width=20, height=1, activebackground="#D0D0D0", activeforeground="#0F172A").pack(pady=12, padx=10)
 
     main_menu_window.mainloop()
 
