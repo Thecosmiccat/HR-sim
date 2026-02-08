@@ -124,9 +124,6 @@ def update_status():
     leadership_label.config(text=f"Leadership: {game.leader_style.capitalize()}")
     difficulty_label.config(text=f"Difficulty: {game.difficulty}")
     
-    unlocked = [ach for ach, data in game.achievements.items() if data["unlocked"]]
-    achievements_label.config(text=f"Achievements: {len(unlocked)}/{len(game.achievements)} unlocked")
-
     profit_label.config(text=f"Monthly Profit: ${calculate_profit():,}")
 
 def leadership_effect():
@@ -365,16 +362,19 @@ def check_achievements():
                     data["unlocked"] = True
                     add_news(f"Achievement Unlocked: {ach} - {data['desc']}")
                     messagebox.showinfo("Achievement Unlocked!", f"{ach}\n\n{data['desc']}")
+                    update_achievements_ui()
             elif ach == "Market Dominator":
                 if game.market_share >= data["target"]:
                     data["unlocked"] = True
                     add_news(f"Achievement Unlocked: {ach} - {data['desc']}")
                     messagebox.showinfo("Achievement Unlocked!", f"{ach}\n\n{data['desc']}")
+                    update_achievements_ui()
             elif ach == "Employee Empire":
                 if game.employees >= data["target"]:
                     data["unlocked"] = True
                     add_news(f"Achievement Unlocked: {ach} - {data['desc']}")
                     messagebox.showinfo("Achievement Unlocked!", f"{ach}\n\n{data['desc']}")
+                    update_achievements_ui()
 
 def add_news(msg):
     timestamp = f"Year {game.year}, Month {game.month}: "
@@ -522,6 +522,7 @@ def restart_game():
     save_exit_btn.grid_remove()
     update_upgrade_buttons()
     update_dept_buttons()
+    update_achievements_ui()
     # Ensure orders UI reflects the reset state
     update_orders_ui()
     game_window.withdraw()
@@ -684,8 +685,8 @@ game_window.withdraw()
 # Root layout
 game_root = tk.Frame(game_window, bg="#F6F1E8")
 game_root.pack(fill="both", expand=True, padx=20, pady=20)
-game_root.columnconfigure(0, weight=1, minsize=260)
-game_root.columnconfigure(1, weight=2, minsize=440)
+game_root.columnconfigure(0, weight=2, minsize=340)
+game_root.columnconfigure(1, weight=3, minsize=440)
 game_root.columnconfigure(2, weight=0, minsize=320)
 game_root.rowconfigure(0, weight=0)
 game_root.rowconfigure(1, weight=1)
@@ -693,13 +694,15 @@ game_root.rowconfigure(2, weight=0)
 
 # Left column
 left_top = tk.Frame(game_root, bg="#F6F1E8")
-left_top.grid(row=0, column=0, sticky="nsew", padx=(0, 16), pady=(0, 16))
+left_top.grid(row=0, column=0, sticky="nsew", padx=(0, 0), pady=(0, 16))
 left_bottom = tk.Frame(game_root, bg="#F6F1E8")
-left_bottom.grid(row=1, column=0, sticky="nsew", padx=(0, 16))
+left_bottom.grid(row=1, column=0, sticky="nsew", padx=(0, 0))
+left_bottom.rowconfigure(0, weight=0)
+left_bottom.rowconfigure(1, weight=1)
 
 # Center column
 center_header = tk.Frame(game_root, bg="#F6F1E8")
-center_header.grid(row=0, column=1, sticky="new", pady=(0, 10))
+center_header.grid(row=0, column=1, sticky="new", pady=(20, 0))
 center_content = tk.Frame(game_root, bg="#F6F1E8")
 center_content.grid(row=1, column=1, sticky="nsew")
 center_content.columnconfigure(0, weight=1)
@@ -734,7 +737,7 @@ money_label = tk.Label(
     fg="#0F766E"
 )
 money_label.pack(pady=(6, 0))
-tk.Frame(center_header, bg="#1F2937", height=2).pack(fill="x", pady=(6, 0))
+tk.Frame(center_header, bg="#1F2937", height=2).pack(fill="x", pady=(2, 0))
 
 # Orders panel
 tk.Label(
@@ -756,38 +759,44 @@ orders_frame = tk.Frame(
 orders_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 orders_frame.pack_propagate(False)
 
-# Status panel
+# Info panel (company, year, leadership, etc.)
+info_panel = tk.Frame(center_content, bg="#FFFDF6", bd=2, relief="solid")
+info_panel.pack(fill="x", pady=(0, 2))
+info_frame = tk.Frame(info_panel, bg="#FFFDF6")
+info_frame.pack(fill="x", padx=10, pady=10)
+
+# Status panel (stat bars only)
 status_panel = tk.Frame(center_content, bg="#FFFDF6", bd=2, relief="solid")
-status_panel.pack(fill="x", pady=(0, 10))
+status_panel.pack(fill="x", pady=(0, 4))
 status_frame = tk.Frame(status_panel, bg="#FFFDF6")
 status_frame.pack(fill="x", padx=10, pady=10)
 
 # Style for progress bars
 style = ttk.Style()
 style.theme_use('default')
-style.configure("green.Horizontal.TProgressbar", background='green')
-style.configure("yellow.Horizontal.TProgressbar", background='yellow')
-style.configure("red.Horizontal.TProgressbar", background='red')
+style.configure("green.Horizontal.TProgressbar", background='green', thickness=18)
+style.configure("yellow.Horizontal.TProgressbar", background='yellow', thickness=18)
+style.configure("red.Horizontal.TProgressbar", background='red', thickness=18)
 
 # Status labels and bars
-company_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
+company_label = tk.Label(info_frame, text="", font=("Arial", 16, "bold"), bg="#FFFDF6", fg="#111827", anchor="w")
 company_label.pack(fill="x")
 
-year_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
+year_label = tk.Label(info_frame, text="", font=("Arial", 16, "bold"), bg="#FFFDF6", fg="#111827", anchor="w")
 year_label.pack(fill="x")
 
-market_share_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
+market_share_label = tk.Label(info_frame, text="", font=("Arial", 16, "bold"), bg="#FFFDF6", fg="#111827", anchor="w")
 market_share_label.pack(fill="x")
 
-employees_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
+employees_label = tk.Label(info_frame, text="", font=("Arial", 16, "bold"), bg="#FFFDF6", fg="#111827", anchor="w")
 employees_label.pack(fill="x")
 
 # Function to create stat frame with label and bar
 def create_stat_frame(parent, text_var):
     frame = tk.Frame(parent, bg="#FFFDF6")
-    label = tk.Label(frame, textvariable=text_var, font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
+    label = tk.Label(frame, textvariable=text_var, font=("Arial", 14, "bold"), bg="#FFFDF6", fg="#111827", anchor="w")
     label.pack(side="left")
-    bar = ttk.Progressbar(frame, orient="horizontal", length=150, mode="determinate", maximum=100)
+    bar = ttk.Progressbar(frame, orient="horizontal", length=240, mode="determinate", maximum=100)
     bar.pack(side="left", padx=(5,0))
     frame.pack(fill="x")
     return label, bar
@@ -810,14 +819,11 @@ reputation_label, reputation_bar = create_stat_frame(status_frame, reputation_va
 customer_satisfaction_var = tk.StringVar()
 customer_satisfaction_label, customer_satisfaction_bar = create_stat_frame(status_frame, customer_satisfaction_var)
 
-leadership_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
+leadership_label = tk.Label(info_frame, text="", font=("Arial", 16, "bold"), bg="#FFFDF6", fg="#111827", anchor="w")
 leadership_label.pack(fill="x")
 
-difficulty_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
+difficulty_label = tk.Label(info_frame, text="", font=("Arial", 16, "bold"), bg="#FFFDF6", fg="#111827", anchor="w")
 difficulty_label.pack(fill="x")
-
-achievements_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
-achievements_label.pack(fill="x")
 
 profit_label = tk.Label(
     center_content,
@@ -878,7 +884,8 @@ news_box.config(state="disabled")  # Make it read-only
 
 # Non-permanent upgrades (actions)
 actions_panel = tk.Frame(left_bottom, bg="#FFFDF6", bd=2, relief="solid")
-actions_panel.pack(fill="both", expand=True)
+actions_panel.grid(row=0, column=0, sticky="ew", pady=(0, 6))
+actions_panel.grid_propagate(True)
 tk.Label(
     actions_panel,
     text="NON-PERMANENT UPGRADES",
@@ -887,7 +894,7 @@ tk.Label(
     fg="#111827"
 ).pack(pady=(10, 6))
 actions_frame = tk.Frame(actions_panel, bg="#FFFDF6")
-actions_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+actions_frame.pack(fill="x", padx=10, pady=(0, 10))
 
 # Buttons
 buttons = [
@@ -905,6 +912,46 @@ buttons = [
 for b in buttons:
     b.pack(fill="x", pady=2)
     b.configure(bg="#E7DED0", fg="#111827", activebackground="#D7CDBD", activeforeground="#111827", relief="solid", bd=1, font=("Arial", 9, "bold"))
+
+# Achievements placeholder panel
+achievements_panel = tk.Frame(left_bottom, bg="#FFFDF6", bd=2, relief="solid")
+achievements_panel.grid(row=1, column=0, sticky="nsew")
+tk.Label(
+    achievements_panel,
+    text="ACHIEVEMENTS",
+    font=("Arial", 13, "bold"),
+    bg="#FFFDF6",
+    fg="#111827"
+).pack(pady=(10, 6))
+achievements_box = tk.Frame(achievements_panel, bg="#FFFDF6", bd=2, relief="solid")
+achievements_box.pack(fill="both", expand=True, padx=10, pady=(4, 10))
+achievements_list = tk.Text(
+    achievements_box,
+    font=("Arial", 12),
+    bg="#FFFDF6",
+    fg="#111827",
+    relief="flat",
+    bd=0,
+    wrap="word",
+    height=8
+)
+achievements_list.pack(fill="both", expand=True, padx=8, pady=6)
+achievements_list.insert(tk.END, "No achievements unlocked yet.")
+achievements_list.config(state="disabled")
+
+def update_achievements_ui():
+    unlocked = [
+        f"{name}: {data['desc']}"
+        for name, data in game.achievements.items()
+        if data["unlocked"]
+    ]
+    achievements_list.config(state="normal")
+    achievements_list.delete(1.0, tk.END)
+    if unlocked:
+        achievements_list.insert(tk.END, "\n".join(unlocked))
+    else:
+        achievements_list.insert(tk.END, "No achievements unlocked yet.")
+    achievements_list.config(state="disabled")
 
 # Permanent upgrades panel
 permanent_panel = tk.Frame(center_content, bg="#F6F1E8")
@@ -1097,6 +1144,25 @@ def create_game_selection():
         except Exception:
             start_window.geometry("800x900")
 
+    # Scrollable content to prevent cutoff on smaller screens
+    start_canvas = tk.Canvas(start_window, bg="#F6F1E8", highlightthickness=0)
+    start_scroll = tk.Scrollbar(start_window, orient="vertical", command=start_canvas.yview)
+    start_canvas.configure(yscrollcommand=start_scroll.set)
+    start_scroll.pack(side="right", fill="y")
+    start_canvas.pack(side="left", fill="both", expand=True)
+
+    content_root = tk.Frame(start_canvas, bg="#F6F1E8")
+    content_window = start_canvas.create_window((0, 0), window=content_root, anchor="n")
+
+    def _sync_start_scroll_region(event=None):
+        start_canvas.configure(scrollregion=start_canvas.bbox("all"))
+
+    def _sync_start_scroll_width(event=None):
+        start_canvas.itemconfigure(content_window, width=start_canvas.winfo_width())
+
+    content_root.bind("<Configure>", _sync_start_scroll_region)
+    start_canvas.bind("<Configure>", _sync_start_scroll_width)
+
     company_var = tk.StringVar(value="")
     leadership_var = tk.StringVar(value="democratic")
     difficulty_var = tk.StringVar(value="Normal")
@@ -1116,41 +1182,50 @@ def create_game_selection():
     back_btn.create_line(15, 25, 32, 40, width=8, capstyle="round", fill="#C24141")
     back_btn.bind("<Button-1>", lambda _e: return_to_menu())
 
-    company_label = tk.Label(start_window, text="Selected Company: None", font=("Arial", 13, "bold"), bg="#EFE7D8", fg="#1F2937")
-    company_label.pack(pady=5)
-    leader_label = tk.Label(start_window, text="Selected Leadership: Democratic", font=("Arial", 13, "bold"), bg="#EFE7D8", fg="#1F2937")
-    leader_label.pack(pady=5)
-    diff_label = tk.Label(start_window, text="Selected Difficulty: Normal", font=("Arial", 13, "bold"), bg="#EFE7D8", fg="#1F2937")
-    diff_label.pack(pady=5)
+    panel_border = tk.Frame(content_root, bg="#D7CDBD", bd=0)
+    panel_border.pack(pady=(40, 30), padx=20)
+    panel = tk.Frame(panel_border, bg="#F2E9D8", bd=2, relief="solid")
+    panel.pack(padx=2, pady=2)
 
-    tk.Label(start_window, text="Business Name:", font=("Arial", 16, "bold"), bg="#F6F1E8", fg="#1F2937").pack(pady=6)
-    name_entry = tk.Entry(start_window, textvariable=business_name_var, font=("Arial", 14), width=30, bg="#FFFDF6", fg="#1F2937", relief="solid", bd=1)
+    glass_overlay = tk.Frame(panel, bg="#F9F1E3")
+    glass_overlay.pack(padx=16, pady=16)
+    tk.Frame(glass_overlay, bg="#FFFFFF", height=2).pack(fill="x", pady=(0, 10))
+
+    company_label = tk.Label(glass_overlay, text="Selected Company: None", font=("Arial", 13, "bold"), bg="#EFE7D8", fg="#1F2937")
+    company_label.pack(pady=4)
+    leader_label = tk.Label(glass_overlay, text="Selected Leadership: Democratic", font=("Arial", 13, "bold"), bg="#EFE7D8", fg="#1F2937")
+    leader_label.pack(pady=4)
+    diff_label = tk.Label(glass_overlay, text="Selected Difficulty: Normal", font=("Arial", 13, "bold"), bg="#EFE7D8", fg="#1F2937")
+    diff_label.pack(pady=4)
+
+    tk.Label(glass_overlay, text="Business Name:", font=("Arial", 16, "bold"), bg="#F9F1E3", fg="#1F2937").pack(pady=5)
+    name_entry = tk.Entry(glass_overlay, textvariable=business_name_var, font=("Arial", 14), width=40, bg="#FFFDF6", fg="#1F2937", relief="solid", bd=1)
     name_entry.pack(pady=2)
 
-    tk.Label(start_window, text="Choose Your Company", font=("Arial", 20, "bold"), bg="#F6F1E8", fg="#1F2937").pack(pady=8)
+    tk.Label(glass_overlay, text="Choose Your Company", font=("Arial", 20, "bold"), bg="#F9F1E3", fg="#1F2937").pack(pady=6)
     def set_company(c):
         company_var.set(c)
         company_label.config(text=f"Selected Company: {c}", fg="#0F766E")
-    tk.Button(start_window, text="Tech Startup", command=lambda: set_company("Tech Startup"), font=("Arial", 14), width=22, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=6, ipady=6)
-    tk.Button(start_window, text="Restaurant Chain", command=lambda: set_company("Restaurant Chain"), font=("Arial", 14), width=22, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=6, ipady=6)
-    tk.Button(start_window, text="Manufacturing", command=lambda: set_company("Manufacturing"), font=("Arial", 14), width=22, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=6, ipady=6)
-    tk.Button(start_window, text="Entertainment", command=lambda: set_company("Entertainment"), font=("Arial", 14), width=22, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=6, ipady=6)
+    tk.Button(glass_overlay, text="Tech Startup", command=lambda: set_company("Tech Startup"), font=("Arial", 14), width=28, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=4, ipady=4)
+    tk.Button(glass_overlay, text="Restaurant Chain", command=lambda: set_company("Restaurant Chain"), font=("Arial", 14), width=28, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=4, ipady=4)
+    tk.Button(glass_overlay, text="Manufacturing", command=lambda: set_company("Manufacturing"), font=("Arial", 14), width=28, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=4, ipady=4)
+    tk.Button(glass_overlay, text="Entertainment", command=lambda: set_company("Entertainment"), font=("Arial", 14), width=28, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=4, ipady=4)
 
-    tk.Label(start_window, text="Choose Leadership Style", font=("Arial", 20, "bold"), bg="#F6F1E8", fg="#1F2937").pack(pady=8)
+    tk.Label(glass_overlay, text="Choose Leadership Style", font=("Arial", 20, "bold"), bg="#F9F1E3", fg="#1F2937").pack(pady=6)
     def set_leadership(l):
         leadership_var.set(l)
         leader_label.config(text=f"Selected Leadership: {l.capitalize()}", fg="#0F766E")
-    tk.Button(start_window, text="Autocratic", command=lambda: set_leadership("autocratic"), font=("Arial", 14), width=22, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=6, ipady=6)
-    tk.Button(start_window, text="Democratic", command=lambda: set_leadership("democratic"), font=("Arial", 14), width=22, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=6, ipady=6)
-    tk.Button(start_window, text="Laissez-faire", command=lambda: set_leadership("laissez-faire"), font=("Arial", 14), width=22, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=6, ipady=6)
+    tk.Button(glass_overlay, text="Autocratic", command=lambda: set_leadership("autocratic"), font=("Arial", 14), width=28, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=4, ipady=4)
+    tk.Button(glass_overlay, text="Democratic", command=lambda: set_leadership("democratic"), font=("Arial", 14), width=28, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=4, ipady=4)
+    tk.Button(glass_overlay, text="Laissez-faire", command=lambda: set_leadership("laissez-faire"), font=("Arial", 14), width=28, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=4, ipady=4)
 
-    tk.Label(start_window, text="Choose Difficulty", font=("Arial", 20, "bold"), bg="#F6F1E8", fg="#1F2937").pack(pady=8)
+    tk.Label(glass_overlay, text="Choose Difficulty", font=("Arial", 20, "bold"), bg="#F9F1E3", fg="#1F2937").pack(pady=6)
     def set_difficulty(d):
         difficulty_var.set(d)
         diff_label.config(text=f"Selected Difficulty: {d}", fg="#0F766E")
-    tk.Button(start_window, text="Easy", command=lambda: set_difficulty("Easy"), font=("Arial", 14), width=22, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=6, ipady=6)
-    tk.Button(start_window, text="Normal", command=lambda: set_difficulty("Normal"), font=("Arial", 14), width=22, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=6, ipady=6)
-    tk.Button(start_window, text="Hard", command=lambda: set_difficulty("Hard"), font=("Arial", 14), width=22, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=6, ipady=6)
+    tk.Button(glass_overlay, text="Easy", command=lambda: set_difficulty("Easy"), font=("Arial", 14), width=28, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=4, ipady=4)
+    tk.Button(glass_overlay, text="Normal", command=lambda: set_difficulty("Normal"), font=("Arial", 14), width=28, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=4, ipady=4)
+    tk.Button(glass_overlay, text="Hard", command=lambda: set_difficulty("Hard"), font=("Arial", 14), width=28, bg="#EFE7D8", fg="#1F2937", activebackground="#D7CDBD", relief="solid", bd=1).pack(pady=4, ipady=4)
 
     def start_game():
         # Business name required (read directly from entry to avoid StringVar sync issues)
@@ -1228,7 +1303,7 @@ def create_game_selection():
         # Auto-save initial state so it appears in load list
         save_game()
 
-    tk.Button(start_window, text="Start", font=("Arial", 20, "bold"), command=start_game, bg="#A7C7A5", fg="#1F2937", activebackground="#9BBF99", width=24, relief="solid", bd=1).pack(pady=20, ipady=8)
+    tk.Button(glass_overlay, text="Start", font=("Arial", 20, "bold"), command=start_game, bg="#A7C7A5", fg="#1F2937", activebackground="#9BBF99", width=28, relief="solid", bd=1).pack(pady=16, ipady=6)
 
     start_window.mainloop()
 
@@ -1293,6 +1368,7 @@ def load_game_file(path):
         update_dept_buttons()
         update_orders_ui()
         update_status()
+        update_achievements_ui()
         # Refresh news feed UI from loaded data
         try:
             news_box.config(state="normal")
