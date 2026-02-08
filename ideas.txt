@@ -1,6 +1,0 @@
-  Balance the game 
-Make the orders a bit bigger
-make it so that when you buy an upgrade instead of just spamming upgrade bought and the stats multiple times it will show .... bought +15 reputation (x1) if you buy another one it would be .... bought +15 reputation (x2) then (x3) and so on so it doesnt flood the news feed
-redesign the stats menu as it is very confusing ( ill add more on ts later )
-MEDIUm j buying option
-make a pop up when you gain an achievemnt with a description of the achievement and a small png of it idk, also make a button in the menu to see your achievements 
