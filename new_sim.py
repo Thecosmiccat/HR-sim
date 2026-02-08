@@ -289,19 +289,19 @@ def update_orders_ui():
     sample_count = 3
     per_height = 0
     if True:
-        sample = tk.Frame(orders_frame, bg="#99bbff", bd=2, relief="ridge")
+        sample = tk.Frame(orders_frame, bg="#FFFDF6", bd=2, relief="ridge")
         lbl = tk.Label(sample,
             text=f"Value: $0\nSuccess: 0%\nPenalty: -None",
-            bg="#99bbff",
-            fg="#0F172A",
+            bg="#FFFDF6",
+            fg="#1F2937",
             justify="center",
             font=("Arial", 12),
             anchor="center"
         )
-        btn_frame_s = tk.Frame(sample, bg="#99bbff")
+        btn_frame_s = tk.Frame(sample, bg="#FFFDF6")
         btn_frame_s.pack(fill="x")
-        tk.Button(btn_frame_s, text="Accept", bg="#22C55E", fg="#0F172A", font=("Arial", 10, "bold")).pack(side="left", expand=True, fill="x", padx=2)
-        tk.Button(btn_frame_s, text="Decline", bg="#EF4444", fg="white", font=("Arial", 10, "bold")).pack(side="right", expand=True, fill="x", padx=2)
+        tk.Button(btn_frame_s, text="Accept", bg="#A7C7A5", fg="#1F2937", font=("Arial", 10, "bold")).pack(side="left", expand=True, fill="x", padx=2)
+        tk.Button(btn_frame_s, text="Decline", bg="#D8A1A1", fg="#1F2937", font=("Arial", 10, "bold")).pack(side="right", expand=True, fill="x", padx=2)
         # Temporarily pack to allow geometry calculation then remove
         lbl.pack(pady=2, fill="x", padx=3)
         sample.pack(pady=2, fill="x", padx=3)
@@ -331,28 +331,28 @@ def update_orders_ui():
 
     # Now create real order widgets
     for i, o in enumerate(game.orders):
-        frame = tk.Frame(orders_frame, bg="#99bbff", bd=2, relief="ridge")
+        frame = tk.Frame(orders_frame, bg="#FFFDF6", bd=2, relief="ridge")
         frame.pack(pady=5, fill="x", padx=5)
 
         tk.Label(frame,
             text=f"Value: ${o['value']:,}\nSuccess: {o['success']}%\nPenalty: -{o['penalty'].capitalize()}",
-            bg="#99bbff",
-            fg="#0F172A",
+            bg="#FFFDF6",
+            fg="#1F2937",
             justify="center",
             font=("Arial", 12),
             anchor="center"
         ).pack(pady=6, fill="x", padx=4)
 
-        btn_frame = tk.Frame(frame, bg="#99bbff")
+        btn_frame = tk.Frame(frame, bg="#FFFDF6")
         btn_frame.pack(fill="x")
 
         tk.Button(btn_frame, text="Accept",
                   command=lambda idx=i: resolve_order(idx, True),
-                  bg="#22C55E", fg="#0F172A", font=("Arial", 10, "bold")).pack(side="left", expand=True, fill="x", padx=2)
+                  bg="#A7C7A5", fg="#1F2937", font=("Arial", 10, "bold")).pack(side="left", expand=True, fill="x", padx=2)
 
         tk.Button(btn_frame, text="Decline",
                   command=lambda idx=i: resolve_order(idx, False),
-                  bg="#EF4444", fg="white", font=("Arial", 10, "bold")).pack(side="right", expand=True, fill="x", padx=2)
+                  bg="#D8A1A1", fg="#1F2937", font=("Arial", 10, "bold")).pack(side="right", expand=True, fill="x", padx=2)
 
 
 
@@ -504,8 +504,8 @@ def end_game():
     game.orders.clear()
     update_orders_ui()
     disable_buttons()
-    save_exit_btn.place_forget()
-    restart_btn.pack(pady=10)
+    save_exit_btn.grid_remove()
+    restart_btn.grid()
 
 def restart_game():
     global start_window, main_menu_window
@@ -518,8 +518,8 @@ def restart_game():
     news_box.config(state="disabled")
     for b in buttons:
         b.config(state="normal")
-    restart_btn.pack_forget()
-    save_exit_btn.place_forget()
+    restart_btn.grid_remove()
+    save_exit_btn.grid_remove()
     update_upgrade_buttons()
     update_dept_buttons()
     # Ensure orders UI reflects the reset state
@@ -676,74 +676,83 @@ def update_dept_buttons():
 
 # ---------------- GAME WINDOW ----------------
 game_window = tk.Tk()
-game_window.configure(bg="#0F172A")
+game_window.configure(bg="#F6F1E8")
 game_window.title("HR Management Simulator")
-game_window.geometry("800x900")
+game_window.geometry("1200x900")
 game_window.withdraw()
 
-# Scrollable root
-scroll_canvas = tk.Canvas(game_window, bg="#0F172A", highlightthickness=0)
-scrollbar = tk.Scrollbar(game_window, orient="vertical", command=scroll_canvas.yview)
-scroll_canvas.configure(yscrollcommand=scrollbar.set)
-scrollbar.pack(side="right", fill="y")
-scroll_canvas.pack(side="left", fill="both", expand=True)
+# Root layout
+game_root = tk.Frame(game_window, bg="#F6F1E8")
+game_root.pack(fill="both", expand=True, padx=20, pady=20)
+game_root.columnconfigure(0, weight=1, minsize=260)
+game_root.columnconfigure(1, weight=2, minsize=440)
+game_root.columnconfigure(2, weight=0, minsize=320)
+game_root.rowconfigure(0, weight=0)
+game_root.rowconfigure(1, weight=1)
+game_root.rowconfigure(2, weight=0)
 
-scroll_frame = tk.Frame(scroll_canvas, bg="#0F172A")
-scroll_window = scroll_canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+# Left column
+left_top = tk.Frame(game_root, bg="#F6F1E8")
+left_top.grid(row=0, column=0, sticky="nsew", padx=(0, 16), pady=(0, 16))
+left_bottom = tk.Frame(game_root, bg="#F6F1E8")
+left_bottom.grid(row=1, column=0, sticky="nsew", padx=(0, 16))
 
-def _sync_scroll_region(event=None):
-    scroll_canvas.configure(scrollregion=scroll_canvas.bbox("all"))
+# Center column
+center_header = tk.Frame(game_root, bg="#F6F1E8")
+center_header.grid(row=0, column=1, sticky="new", pady=(0, 10))
+center_content = tk.Frame(game_root, bg="#F6F1E8")
+center_content.grid(row=1, column=1, sticky="nsew")
+center_content.columnconfigure(0, weight=1)
 
-def _sync_scroll_width(event=None):
-    scroll_canvas.itemconfigure(scroll_window, width=scroll_canvas.winfo_width())
+# Right column (orders remain in the same place)
+right_frame = tk.Frame(game_root, bg="#EFE7D8", width=320, bd=2, relief="solid")
+right_frame.grid(row=0, column=2, rowspan=2, sticky="nsew", padx=(16, 0))
+right_frame.grid_propagate(False)
 
-scroll_frame.bind("<Configure>", _sync_scroll_region)
-scroll_canvas.bind("<Configure>", _sync_scroll_width)
-
-def _on_mousewheel(event):
-    scroll_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
-scroll_canvas.bind_all("<MouseWheel>", _on_mousewheel)
-
-main_frame = tk.Frame(scroll_frame, bg="#0F172A")
-main_frame.pack(fill="both", expand=True)
-
-left_frame = tk.Frame(main_frame, bg="#0F172A")
-left_frame.pack(side="left", fill="both", expand=True)
-
-right_frame = tk.Frame(main_frame, bg="#1E293B", width=340)
-right_frame.pack(side="right", fill="y")
-# Keep the right frame at the specified width so the Active Orders box is larger
-right_frame.pack_propagate(False)
-
-tk.Label(
-    right_frame,
-    text="ACTIVE ORDERS",
-    font=("Arial", 14, "bold"),
-    bg="#1E293B",
-    fg="#22C55E"
-).pack(pady=10)
-
-orders_frame = tk.Frame(
-    right_frame,
-    bg="#1E293B",
-    height=640,
-    bd=0,
-    highlightbackground="#FFFFFF",
-    highlightthickness=1
-)
-orders_frame.pack(fill="both", expand=True)
-# Keep fixed minimum height so up to three orders display fully
-orders_frame.pack_propagate(False)
-
-
+# Footer
+footer_frame = tk.Frame(game_root, bg="#F6F1E8")
+footer_frame.grid(row=2, column=0, columnspan=3, sticky="ew", pady=(12, 0))
+footer_frame.columnconfigure(0, weight=1)
+footer_frame.columnconfigure(1, weight=0)
 
 status = tk.StringVar()
 message = tk.StringVar()
 
-# Status frame with bars
-status_frame = tk.Frame(left_frame, bg="#1E293B")
-status_frame.pack(pady=5, fill="x")  # back to original position
+# Center header
+tk.Label(
+    center_header,
+    text="PLAYER STATS",
+    font=("Arial", 20, "bold"),
+    bg="#F6F1E8",
+    fg="#1F2937"
+).pack()
+tk.Frame(center_header, bg="#1F2937", height=2).pack(fill="x", pady=(6, 0))
+
+# Orders panel
+tk.Label(
+    right_frame,
+    text="ORDERS",
+    font=("Arial", 14, "bold"),
+    bg="#EFE7D8",
+    fg="#1F2937"
+).pack(pady=10)
+
+orders_frame = tk.Frame(
+    right_frame,
+    bg="#EFE7D8",
+    height=640,
+    bd=0,
+    highlightbackground="#1F2937",
+    highlightthickness=1
+)
+orders_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+orders_frame.pack_propagate(False)
+
+# Status panel
+status_panel = tk.Frame(center_content, bg="#FFFDF6", bd=2, relief="solid")
+status_panel.pack(fill="x", pady=(0, 10))
+status_frame = tk.Frame(status_panel, bg="#FFFDF6")
+status_frame.pack(fill="x", padx=10, pady=10)
 
 # Style for progress bars
 style = ttk.Style()
@@ -753,25 +762,25 @@ style.configure("yellow.Horizontal.TProgressbar", background='yellow')
 style.configure("red.Horizontal.TProgressbar", background='red')
 
 # Status labels and bars
-company_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+company_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
 company_label.pack(fill="x")
 
-year_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+year_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
 year_label.pack(fill="x")
 
-money_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+money_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
 money_label.pack(fill="x")
 
-market_share_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+market_share_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
 market_share_label.pack(fill="x")
 
-employees_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+employees_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
 employees_label.pack(fill="x")
 
 # Function to create stat frame with label and bar
 def create_stat_frame(parent, text_var):
-    frame = tk.Frame(parent, bg="#1E293B")
-    label = tk.Label(frame, textvariable=text_var, font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+    frame = tk.Frame(parent, bg="#FFFDF6")
+    label = tk.Label(frame, textvariable=text_var, font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
     label.pack(side="left")
     bar = ttk.Progressbar(frame, orient="horizontal", length=150, mode="determinate", maximum=100)
     bar.pack(side="left", padx=(5,0))
@@ -796,60 +805,65 @@ reputation_label, reputation_bar = create_stat_frame(status_frame, reputation_va
 customer_satisfaction_var = tk.StringVar()
 customer_satisfaction_label, customer_satisfaction_bar = create_stat_frame(status_frame, customer_satisfaction_var)
 
-leadership_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+leadership_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
 leadership_label.pack(fill="x")
 
-difficulty_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+difficulty_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
 difficulty_label.pack(fill="x")
 
-achievements_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#1E293B", fg="#F1F5F9", anchor="w")
+achievements_label = tk.Label(status_frame, text="", font=("Arial", 12), bg="#FFFDF6", fg="#111827", anchor="w")
 achievements_label.pack(fill="x")
 
 profit_label = tk.Label(
-    scroll_frame,
+    center_content,
     text="Monthly Profit: $0",
     font=("Arial", 16, "bold"),
-    bg="#0F172A",
-    fg="#22C55E"
+    bg="#F6F1E8",
+    fg="#0F766E"
 )
-profit_label.pack(pady=2)
+profit_label.pack(pady=(0, 8))
 
 message_label = tk.Label(
-    scroll_frame,
+    center_content,
     textvariable=message,
-    font=("Comic Sans MS", 14),
-    fg="#F1F5F9",
-    bg="#334155",
-    width=80,
-    height=1,
+    font=("Times New Roman", 12, "italic"),
+    fg="#111827",
+    bg="#EFE7D8",
+    width=60,
+    height=2,
     relief="solid",
     bd=2
 )
-message_label.pack(pady=2)
+message_label.pack(pady=(0, 12))
 
-news_label = tk.Label(
-    scroll_frame,
-    text="News Feed:",
-    font=("Arial", 14, "bold"),
-    bg="#0F172A",
-    fg="#F59E0B"
+# News feed (newspaper style)
+news_panel = tk.Frame(left_top, bg="#FFFDF6", bd=2, relief="solid")
+news_panel.pack(fill="both", expand=True)
+news_header = tk.Label(
+    news_panel,
+    text="NEWS FEED",
+    font=("Times New Roman", 14, "bold"),
+    bg="#FFFDF6",
+    fg="#111827"
 )
-news_label.pack(pady=5)
+news_header.pack(pady=(8, 2))
+tk.Frame(news_panel, bg="#111827", height=1).pack(fill="x", padx=8, pady=(0, 6))
 
 # News feed with scrollbar
-news_frame = tk.Frame(scroll_frame, bg="#0F172A")
-news_frame.pack(pady=5)
+news_frame = tk.Frame(news_panel, bg="#FFFDF6")
+news_frame.pack(padx=8, pady=(0, 8), fill="both", expand=True)
 news_scrollbar = tk.Scrollbar(news_frame)
 news_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 news_box = tk.Text(
     news_frame,
-    font=("Arial", 10),
-    bg="#1E293B",
-    fg="#F1F5F9",
-    width=80,
-    height=5,
+    font=("Times New Roman", 11),
+    bg="#FCF5E5",
+    fg="#111827",
+    width=32,
+    height=14,
     relief="solid",
     bd=2,
+    wrap="word",
     yscrollcommand=news_scrollbar.set
 )
 news_box.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -857,31 +871,63 @@ news_scrollbar.config(command=news_box.yview)
 news_box.insert(tk.END, "Welcome to HR Management Simulator! News will appear here.")
 news_box.config(state="disabled")  # Make it read-only
 
+# Non-permanent upgrades (actions)
+actions_panel = tk.Frame(left_bottom, bg="#FFFDF6", bd=2, relief="solid")
+actions_panel.pack(fill="both", expand=True)
+tk.Label(
+    actions_panel,
+    text="NON-PERMANENT UPGRADES",
+    font=("Arial", 12, "bold"),
+    bg="#FFFDF6",
+    fg="#111827"
+).pack(pady=(10, 6))
+actions_frame = tk.Frame(actions_panel, bg="#FFFDF6")
+actions_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+
 # Buttons
 buttons = [
-    tk.Button(scroll_frame, text="Training ($5000) - Productivity +15", command=training),
-    tk.Button(scroll_frame, text="PR Campaign ($5000) - Reputation +15", command=pr_campaign),
-    tk.Button(scroll_frame, text="Bonuses ($4000) - Morale +20", command=bonus),
-    tk.Button(scroll_frame, text="Recruit ($3000) - +1 Employee", command=recruit),
-    tk.Button(scroll_frame, text="Marketing ($4000) - Marketing +15, Reputation +5", command=marketing_campaign),
-    tk.Button(scroll_frame, text="R&D ($6000) - Innovation +20", command=r_and_d),
-    tk.Button(scroll_frame, text="Customer Service ($2000) - Satisfaction +15, Reputation +3", command=customer_service),
-    tk.Button(scroll_frame, text="Change Leadership (Cycle Styles)", command=change_leadership),
-    tk.Button(scroll_frame, text="Special Ability (Style-Dependent)", command=special_ability)
-    ,
-    tk.Button(scroll_frame, text="Save Game", command=lambda: save_game())
+    tk.Button(actions_frame, text="Training ($5000) - Productivity +15", command=training),
+    tk.Button(actions_frame, text="PR Campaign ($5000) - Reputation +15", command=pr_campaign),
+    tk.Button(actions_frame, text="Bonuses ($4000) - Morale +20", command=bonus),
+    tk.Button(actions_frame, text="Recruit ($3000) - +1 Employee", command=recruit),
+    tk.Button(actions_frame, text="Marketing ($4000) - Marketing +15, Reputation +5", command=marketing_campaign),
+    tk.Button(actions_frame, text="R&D ($6000) - Innovation +20", command=r_and_d),
+    tk.Button(actions_frame, text="Customer Service ($2000) - Satisfaction +15, Reputation +3", command=customer_service),
+    tk.Button(actions_frame, text="Change Leadership (Cycle Styles)", command=change_leadership),
+    tk.Button(actions_frame, text="Special Ability (Style-Dependent)", command=special_ability),
+    tk.Button(actions_frame, text="Save Game", command=lambda: save_game())
 ]
 
 for b in buttons:
     b.pack(fill="x", pady=2)
-    b.configure(bg="#334155", fg="#D3DDF9", activebackground="#1E293B", activeforeground="#22C55E", relief="flat", bd=0, font=("Arial", 9, "bold"))
+    b.configure(bg="#E7DED0", fg="#111827", activebackground="#D7CDBD", activeforeground="#111827", relief="solid", bd=1, font=("Arial", 9, "bold"))
 
-# status_frame.pack(pady=5, fill="x")  # back after buttons
+# Permanent upgrades panel
+permanent_panel = tk.Frame(center_content, bg="#F6F1E8")
+permanent_panel.pack(fill="both", expand=True)
+tk.Label(
+    permanent_panel,
+    text="PERMANENT UPGRADES (3 PER COLUMN)",
+    font=("Arial", 12, "bold"),
+    bg="#F6F1E8",
+    fg="#1F2937"
+).pack(pady=(2, 8))
+
+perm_columns = tk.Frame(permanent_panel, bg="#F6F1E8")
+perm_columns.pack(fill="both", expand=True)
+perm_columns.columnconfigure(0, weight=1)
+perm_columns.columnconfigure(1, weight=1)
+perm_columns.rowconfigure(0, weight=1)
+
+perm_left = tk.Frame(perm_columns, bg="#FFFDF6", bd=2, relief="solid")
+perm_left.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+perm_right = tk.Frame(perm_columns, bg="#FFFDF6", bd=2, relief="solid")
+perm_right.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
 
 # Upgrade buttons
-upgrade_frame = tk.Frame(scroll_frame, bg="#0F172A")
-upgrade_frame.pack(pady=10)
-tk.Label(upgrade_frame, text="Upgrades:", font=("Arial", 14, "bold"), bg="#0F172A", fg="#22C55E").pack()
+upgrade_frame = tk.Frame(perm_left, bg="#FFFDF6")
+upgrade_frame.pack(fill="both", expand=True, padx=10, pady=10)
+tk.Label(upgrade_frame, text="Upgrades", font=("Arial", 12, "bold"), bg="#FFFDF6", fg="#111827").pack(pady=(0, 6))
 upgrade_buttons = {}
 upgrade_effects = {
     "Better Office": "Morale +10",
@@ -891,14 +937,14 @@ upgrade_effects = {
 for up in ["Better Office", "Automation", "Coffee Machine"]:
     cost = {"Better Office": 10000, "Automation": 15000, "Coffee Machine": 5000}[up]
     btn = tk.Button(upgrade_frame, text=f"{up} (${cost}) - {upgrade_effects[up]}", command=lambda u=up: buy_upgrade(u))
-    btn.pack(fill="x", pady=1)
-    btn.configure(bg="#475569", fg="#D3DDF9", activebackground="#1E293B", activeforeground="#22C55E", relief="flat", bd=0)
+    btn.pack(fill="x", pady=3)
+    btn.configure(bg="#E7DED0", fg="#111827", activebackground="#D7CDBD", activeforeground="#111827", relief="solid", bd=1)
     upgrade_buttons[up] = btn
 
 # Department buttons
-dept_frame = tk.Frame(scroll_frame, bg="#0F172A")
-dept_frame.pack(pady=10)
-tk.Label(dept_frame, text="Departments:", font=("Arial", 14, "bold"), bg="#0F172A", fg="#22C55E").pack()
+dept_frame = tk.Frame(perm_right, bg="#FFFDF6")
+dept_frame.pack(fill="both", expand=True, padx=10, pady=10)
+tk.Label(dept_frame, text="Departments", font=("Arial", 12, "bold"), bg="#FFFDF6", fg="#111827").pack(pady=(0, 6))
 dept_buttons = {}
 dept_effects = {
     "HR": "Ongoing Morale Boost",
@@ -908,8 +954,8 @@ dept_effects = {
 for dept in ["HR", "IT", "PR"]:
     cost = {"HR": 8000, "IT": 10000, "PR": 7000}[dept]
     btn = tk.Button(dept_frame, text=f"{dept} (${cost}) - {dept_effects[dept]}", command=lambda d=dept: buy_department(d))
-    btn.pack(fill="x", pady=1)
-    btn.configure(bg="#475569", fg="#D3DDF9", activebackground="#1E293B", activeforeground="#22C55E", relief="flat", bd=0)
+    btn.pack(fill="x", pady=3)
+    btn.configure(bg="#E7DED0", fg="#111827", activebackground="#D7CDBD", activeforeground="#111827", relief="solid", bd=1)
     dept_buttons[dept] = btn
 
 
@@ -917,11 +963,11 @@ for dept in ["HR", "IT", "PR"]:
 
 # Restart button
 restart_btn = tk.Button(
-    scroll_frame,
+    footer_frame,
     text="Restart Game",
-    font=("Arial", 16),
-    bg="#22C55E",
-    fg="#0F172A",
+    font=("Arial", 14, "bold"),
+    bg="#E7DED0",
+    fg="#111827",
     command=restart_game
 )
 
@@ -937,13 +983,17 @@ def save_and_exit():
         message.set(f"Error: {str(e)}")
 
 save_exit_btn = tk.Button(
-    game_window,
+    footer_frame,
     text="Save & Exit",
-    font=("Arial", 12),
-    bg="#F97316",
-    fg="#0F172A",
+    font=("Arial", 12, "bold"),
+    bg="#F59E0B",
+    fg="#111827",
     command=save_and_exit
 )
+restart_btn.grid(row=0, column=0, sticky="w", padx=10)
+save_exit_btn.grid(row=0, column=1, sticky="e", padx=10)
+restart_btn.grid_remove()
+save_exit_btn.grid_remove()
 
 # ---------------- MAIN MENU ----------------
 def create_main_menu():
@@ -1149,7 +1199,7 @@ def create_game_selection():
         update_status()
         update_upgrade_buttons()
         update_dept_buttons()
-        save_exit_btn.place(relx=0.02, rely=0.95, anchor='sw', width=110, height=40)
+        save_exit_btn.grid()
         save_exit_btn.lift()
         game.running = True
         monthly_tick()
