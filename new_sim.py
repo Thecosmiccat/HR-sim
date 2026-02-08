@@ -22,6 +22,7 @@ def clamp_stats():
 
 # Keep strong references to animation callbacks to prevent garbage collection
 _animation_callbacks = {}
+_orders_ui_sized = False
 
 def _hsl_to_hex(h, s, l):
     """Convert HSL to hex color. h: 0-360, s: 0-100, l: 0-100"""
@@ -277,15 +278,14 @@ def resolve_order(index, accepted):
 
 
 def update_orders_ui():
+    global _orders_ui_sized
     # Clear current children
     for w in orders_frame.winfo_children():
         w.destroy()
 
-    # Measure a single order widget to determine required height
-    # We'll size the orders_frame to fit up to 3 orders so none get clipped
-    sample_count = 3
-    per_height = 0
-    if True:
+    # Measure once to avoid resizing the window on every update (prevents shake)
+    if not _orders_ui_sized:
+        sample_count = 3
         sample = tk.Frame(orders_frame, bg="#FFFDF6", bd=2, relief="ridge")
         lbl = tk.Label(sample,
             text=f"Value: $0\nSuccess: 0%\nPenalty: -None",
@@ -299,32 +299,18 @@ def update_orders_ui():
         btn_frame_s.pack(fill="x")
         tk.Button(btn_frame_s, text="Accept", bg="#A7C7A5", fg="#1F2937", font=("Arial", 10, "bold")).pack(side="left", expand=True, fill="x", padx=2)
         tk.Button(btn_frame_s, text="Decline", bg="#D8A1A1", fg="#1F2937", font=("Arial", 10, "bold")).pack(side="right", expand=True, fill="x", padx=2)
-        # Temporarily pack to allow geometry calculation then remove
         lbl.pack(pady=2, fill="x", padx=3)
         sample.pack(pady=2, fill="x", padx=3)
-        # Ensure the whole window processes geometry so we get a reliable height
         try:
             game_window.update_idletasks()
         except Exception:
             orders_frame.update_idletasks()
-        per_height = sample.winfo_height()
-        # Enforce a sensible minimum per-order height so three items never get squashed
-        per_height = max(per_height, 130)
+        per_height = max(sample.winfo_height(), 130)
         sample.destroy()
 
-    # Reserve space for exactly three orders so the panel fits tightly
-    total_height = per_height * sample_count
-    orders_frame.config(height=total_height)
-    # Keep the right-side container slightly larger than the orders area
-    try:
-        right_frame.config(height=total_height + 2)
-    except Exception:
-        pass
-    # Ensure geometry is recalculated so the change takes effect immediately
-    try:
-        game_window.update_idletasks()
-    except Exception:
-        orders_frame.update_idletasks()
+        total_height = per_height * sample_count
+        orders_frame.config(height=total_height)
+        _orders_ui_sized = True
 
     # Now create real order widgets
     for i, o in enumerate(game.orders):
@@ -1388,6 +1374,8 @@ def load_game_file(path):
             game_window.state('zoomed')
         except Exception:
             pass
+    save_exit_btn.grid()
+    save_exit_btn.lift()
     monthly_tick()
 
 def load_game_dialog():
