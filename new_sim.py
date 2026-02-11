@@ -3,6 +3,8 @@
 # Inspired by ideas from Danila, Audrey, and Lyra
 #pr rebyata
 
+print("The game is starting...")
+
 import sys
 import os
 import io
