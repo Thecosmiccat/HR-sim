@@ -19,7 +19,7 @@ A strategy-based management game built with Python and Tkinter where you run a c
 
 ## 🖼️ Demo
 
-![Game Demo](demo.png)
+![Game Demo](Demo.png)
 
 ---
 
